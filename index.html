@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>アルシア地方 α42 共同デバッグ修正版</title>
+<title>アルシア地方 α43 デバッグ強化・なみのり・伝説戦修正版</title>
 <style>
 :root{
   --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
@@ -166,11 +166,19 @@ h1{font-size:20px;margin:4px 0 10px}
   #titleCard h1{font-size:24px}
   #titleCard{padding:18px}
 }
+
+/* α43 debug / surf polish */
+#ballModal,#debugModal{position:fixed;inset:0;background:#000c;z-index:55;display:flex;align-items:center;justify-content:center;padding:14px}
+#player.surfing{box-shadow:0 0 0 3px #72c9ff,0 0 14px #72c9ff;border-radius:50%}
+.debugGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.debugGrid .sysBtn{min-height:44px}
+#debugOutput{white-space:pre-wrap;max-height:220px;overflow:auto}
+@media(max-width:520px){.debugGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <main>
-  <h1>アルシア地方 α42 共同デバッグ修正版</h1>
+  <h1>アルシア地方 α43 デバッグ強化・なみのり・伝説戦修正版</h1>
   <div id="topbar">
     <span id="mapName" class="badge">ヤハギタウン</span>
     <span id="party" class="badge">相棒：未選択</span>
@@ -209,6 +217,7 @@ h1{font-size:20px;margin:4px 0 10px}
       <button id="saveBtn" class="menuBtn">セーブ</button>
       <button id="loadBtn" class="menuBtn">ロード</button>
       <button id="helpBtn" class="menuBtn">遊び方</button>
+      <button id="debugBtn" class="menuBtn">デバッグ</button>
     </div>
   </section>
 </main>
@@ -287,6 +296,27 @@ h1{font-size:20px;margin:4px 0 10px}
 </div>
 
 
+
+<div id="debugModal" class="hidden">
+  <div class="systemCard">
+    <div class="systemTitle"><h2>デバッグモード</h2><button id="closeDebug" class="closeBtn">閉じる</button></div>
+    <div class="notice">開発・動作確認用。進行フラグを変更すると本編を飛ばせます。</div>
+    <h3>ワープ</h3>
+    <select id="debugMapSelect" class="sysBtn" style="width:100%;margin-bottom:8px"></select>
+    <div class="debugGrid">
+      <button id="debugWarp" class="sysBtn">選択地点へワープ</button>
+      <button id="debugHeal" class="sysBtn">全回復</button>
+      <button id="debugBalls" class="sysBtn">各ボール+10</button>
+      <button id="debugMoney" class="sysBtn">所持金+10000</button>
+      <button id="debugLevel" class="sysBtn">手持ちLv+5</button>
+      <button id="debugBadges" class="sysBtn">8バッジON/OFF</button>
+      <button id="debugBattleTest" class="sysBtn">戦闘セルフテスト</button>
+      <button id="debugDiagnose" class="sysBtn">進行診断</button>
+    </div>
+    <div id="debugOutput" class="notice" style="margin-top:10px">診断結果はここに表示されます。</div>
+  </div>
+</div>
+
 <div id="ballModal" class="hidden">
   <div class="systemCard">
     <div class="systemTitle"><h2>ボールを選ぶ</h2><button id="closeBall" class="closeBtn">閉じる</button></div>
@@ -313,7 +343,7 @@ h1{font-size:20px;margin:4px 0 10px}
       <button id="newGameBtn" class="titleBtn">はじめから</button>
       <button id="resetSaveBtn" class="titleBtn dangerBtn">セーブデータを消す</button>
     </div>
-    <div class="versionBadge">Version α40 Final Candidate</div>
+    <div class="versionBadge">Version α43 Debug Candidate</div>
   </div>
 </div>
 <div id="autosaveToast">オートセーブしました</div>
@@ -341,7 +371,7 @@ h1{font-size:20px;margin:4px 0 10px}
   <div class="modalCard">
     <h2>遊び方</h2>
     <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
-    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α42共同デバッグ版では、最初の親友戦で技を押しても反応しない重大バグを修正しました。AI評価関数の未定義変数を除去し、戦闘中の連打防止も追加。アズミ南口の重複出口、13番水路の通路封鎖、御三家未選択セーブの復帰、ガチライバル第1戦の第2バッジ条件を修正しました。さらにジム撃破後の次目的地案内と、親友・ライバルなど重要戦の勝利後会話を復活させています。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α43ではデバッグモードを追加し、ワープ・回復・レベル調整・ボール追加・8バッジ切替・進行診断・戦闘セルフテストができます。伝説イベントは2匹が現れつつ実際に戦うのはセーブごとに決まった片方だけに修正。13番水路は本当の水上タイルとなり、第5バッジ後になみのり状態で移動・水上エンカウントします。セーブデータにバージョン管理を追加。野生戦のボール選択画面が戦闘画面の裏に隠れていた問題も修正し、モンスターボール等を自分で選んで投げられるようにしました。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
     <button id="closeHelp" class="menuBtn">閉じる</button>
   </div>
 </div>
@@ -352,13 +382,16 @@ h1{font-size:20px;margin:4px 0 10px}
 const $ = (id)=>document.getElementById(id);
 const mapEl=$("map"), playerEl=$("player"), mapNameEl=$("mapName"), partyEl=$("party");
 const dialogTextEl=$("dialogText"), starterModal=$("starterModal"), helpModal=$("helpModal");
-const battleModal=$("battleModal"), bagModal=$("bagModal"), partyModal=$("partyModal"), boxModal=$("boxModal"), dexModal=$("dexModal"), dexDetailModal=$("dexDetailModal"), detailModal=$("detailModal"), moveTutorModal=$("moveTutorModal"), ballModal=$("ballModal"), shopModal=$("shopModal");
+const battleModal=$("battleModal"), bagModal=$("bagModal"), partyModal=$("partyModal"), boxModal=$("boxModal"), dexModal=$("dexModal"), dexDetailModal=$("dexDetailModal"), detailModal=$("detailModal"), moveTutorModal=$("moveTutorModal"), ballModal=$("ballModal"), debugModal=$("debugModal"), shopModal=$("shopModal");
 const moneyChip=$("moneyChip"), ballsChip=$("ballsChip"), partyCountChip=$("partyCountChip"), expChip=$("expChip");
 const cutsceneOverlay=$("cutsceneOverlay"), eventBanner=$("eventBanner");
 const titleScreen=$("titleScreen"), autosaveToast=$("autosaveToast");
 
 const state = {
+  saveVersion:43,
   map:"yahagi", x:5, y:7, dir:"up", starter:null,
+  surfing:false,
+  legendVersion:null,
   money:3000,
   bag:{"モンスターボール":0,"キズぐすり":0,"どくけし":0,"まひなおし":0,"いいキズぐすり":0,"すごいキズぐすり":0,"なんでもなおし":0,"スーパーボール":0,"ハイパーボール":0,"たべのこし":0,"きあいのタスキ":0,"せんせいのツメ":0,"ほのおのいし":0,"みずのいし":0,"かみなりのいし":0},
   mons:[],
@@ -1409,7 +1442,7 @@ const maps = {
   },
   route13:{
     name:"13番道路（ヤハギ水路）",
-    rows:["TTTTTETTTTTT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TTTTTETTTTTT"],
+    rows:["TTTTTETTTTTT","TWWWWIWWWWWT","TWWWWIWWWWWT","TWWWWIWWWWWT","TWWWWIWWWWWT","TWWWWIWWWWWT","TWWWWIWWWWWT","TWWWWIWWWWWT","TWWWWIWWWWWT","TTTTTETTTTTT"],
     start:{x:5,y:1},
     npcs:[
       {x:4,y:4,name:"つりびと",text:"こんな水路で会うなんてな！ 一勝負しよう！",flag:"route13TrainerA"},
@@ -4044,7 +4077,7 @@ const TRAINERS = {
   ,hqGrunts:{name:"スプレマ団したっぱ連戦",team:[["デルビル",45],["スカタンク",45],["ドータクン",46],["ニューラ",46]],reward:2200}
   ,selmaBattle:{name:"幹部 セルマ",team:[["ドータクン",47],["ニンフィア",48],["ミロカロス",48]],reward:3500}
   ,valdBattle:{name:"ボス ヴァルド",team:[["ドンカラス",50],["ドラピオン",50],["ミロカロス",51],["ヒートロトム",51],["ポリゴンZ",52],["シャルメイズ",53]],reward:7000}
-  ,legendCalm:{name:"暴走する伝説",team:[["ルミナーク",56],["ノクザーク",56]],reward:0}
+  ,legendCalm:{name:"暴走する伝説",team:[["ルミナーク",56]],reward:0}
 
   ,route11TrainerA:{name:"サイクリング",team:[["キャモメ",34],["ロゼリア",34]],reward:1200}
   ,route11TrainerB:{name:"ベテラントレーナー",team:[["ランターン",35],["デルビル",35]],reward:1250}
@@ -4203,6 +4236,9 @@ function repairProgressFlags(){
 }
 
 function normalizeState(){
+  state.saveVersion=CURRENT_SAVE_VERSION;
+  state.surfing ??= false;
+  state.legendVersion ??= null;
   state.money ??= 3000;
   state.bag ??= {};
   for(const k of ["モンスターボール","スーパーボール","ハイパーボール","ダイブボール","キズぐすり","どくけし","まひなおし","いいキズぐすり","すごいキズぐすり","なんでもなおし","たべのこし","きあいのタスキ","せんせいのツメ","ほのおのいし","みずのいし","かみなりのいし"]) state.bag[k] ??= 0;
@@ -4949,7 +4985,11 @@ function storyTrainerDefinition(flag,def){
   const fBase=friendStarterAgainst(state.starter);
   const rBase=rivalStarterAgainst(state.starter);
 
-  if(flag==="friend2"){
+  if(flag==="legendCalm"){
+    state.legendVersion ??= "ルミナーク";
+    copy.name=`暴走する${state.legendVersion}`;
+    copy.team=[[state.legendVersion,56]];
+  }else if(flag==="friend2"){
     copy.team=[[evolvedStarter(fBase,10),10],["ムックル",10]];
   }else if(flag==="friend3"){
     copy.team=[[evolvedStarter(fBase,30),30],["ムクバード",29],["メリープ",29],["ウパー",30]];
@@ -5031,7 +5071,8 @@ function renderBattle(){
   const expNeed=expToNext(p), expPct=Math.max(0,Math.min(100,Math.round((p.exp/expNeed)*100)));
   $("playerBattleCard").innerHTML=`<b>${p.name}</b>　Lv.${p.level} ${pStatus}<div>${pTypes}</div><div class="abilityTag">特性:${p.ability}</div><div class="heldTag">持ち物:${p.held}</div><div>HP ${p.hp}/${p.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${pPct}%"></div></div><div class="partyMini">EXP ${p.exp}/${expNeed}</div><div class="expOuter"><div class="expInner" style="width:${expPct}%"></div></div>`;
   $("battleLog").textContent=b.log||"";
-  $("ballBtn").disabled=b.kind==="trainer";
+  $("ballBtn").disabled=(b.kind!=="wild");
+  $("ballBtn").textContent=b.kind==="wild"?"ボール":"ボール不可";
   $("runBtn").disabled=b.kind==="trainer";
   renderMoveButtons();
   renderHUD();
@@ -5322,9 +5363,11 @@ function statusCatchBonus(enemy){
 }
 function openBallChooser(){
   const b=state.battle;if(!b)return;
-  if(b.kind==="trainer"){b.log="トレーナーのポケモンは捕まえられない！";renderBattle();return;}
+  if(b.kind!=="wild"){b.log="このバトルではボールを使えない！";renderBattle();return;}
+  const list=$("ballList");
+  if(!list || !ballModal){ b.log="ボール選択画面を開けなかった。"; renderBattle(); return; }
   const balls=["モンスターボール","スーパーボール","ハイパーボール","ダイブボール"];
-  $("ballList").innerHTML="";
+  list.innerHTML="";
   let any=false;
   balls.forEach(name=>{
     const count=state.bag[name]||0;if(count<=0)return;any=true;
@@ -5332,9 +5375,9 @@ function openBallChooser(){
     row.innerHTML=`<span><b>${name}</b><div class="partyMini">×${count}</div></span>`;
     const btn=document.createElement("button");btn.className="sysBtn";btn.textContent="投げる";
     btn.onclick=()=>{ballModal.classList.add("hidden");throwSelectedBall(name);};
-    row.appendChild(btn);$("ballList").appendChild(row);
+    row.appendChild(btn);list.appendChild(row);
   });
-  if(!any){$("ballList").innerHTML='<div class="notice">ボールを持っていない。</div>';}
+  if(!any){list.innerHTML='<div class="notice">ボールを持っていない。</div>';}
   ballModal.classList.remove("hidden");
 }
 function throwSelectedBall(ball){
@@ -5585,6 +5628,7 @@ function renderMap(){
 function renderPlayer(){
   playerEl.style.left=(state.x*100/W)+"%";
   playerEl.style.top=(state.y*100/H)+"%";
+  playerEl.classList.toggle("surfing",!!state.surfing);
 }
 function say(name,text){
   $("dialog").querySelector(".name").textContent=name;
@@ -5684,7 +5728,7 @@ function checkTrainerSight(){
 }
 
 function move(dx,dy,dir){
-  if(!titleScreen.classList.contains("hidden") || !cutsceneOverlay.classList.contains("hidden") || !battleModal.classList.contains("hidden") || !bagModal.classList.contains("hidden") || !partyModal.classList.contains("hidden") || !boxModal.classList.contains("hidden") || !dexModal.classList.contains("hidden") || !dexDetailModal.classList.contains("hidden") || !detailModal.classList.contains("hidden") || !moveTutorModal.classList.contains("hidden") || !ballModal.classList.contains("hidden") || !shopModal.classList.contains("hidden")) return;
+  if(!titleScreen.classList.contains("hidden") || !cutsceneOverlay.classList.contains("hidden") || !battleModal.classList.contains("hidden") || !bagModal.classList.contains("hidden") || !partyModal.classList.contains("hidden") || !boxModal.classList.contains("hidden") || !dexModal.classList.contains("hidden") || !dexDetailModal.classList.contains("hidden") || !detailModal.classList.contains("hidden") || !moveTutorModal.classList.contains("hidden") || !ballModal.classList.contains("hidden") || !debugModal.classList.contains("hidden") || !shopModal.classList.contains("hidden")) return;
   state.dir=dir;
   const nx=state.x+dx, ny=state.y+dy;
   if(nx<0||ny<0||nx>=W||ny>=H) return;
@@ -5692,26 +5736,32 @@ function move(dx,dy,dir){
   if(!row) return;
   const ch=row[nx];
   const ex=exitAt(nx,ny);
+  if(state.map==="route13" && ch==="I" && !state.flags.gym5){
+    say("ガイド","第5バッジを手に入れるとなみのりで進める。");
+    return;
+  }
   // 出口マスは地形文字が壁・屋根でも進入可能として扱う。
   if((isBlocked(ch) && !ex) || npcAt(nx,ny)){
     say("ガイド","ここは通れない。");
     return;
   }
-  state.x=nx; state.y=ny; renderPlayer();
+  state.x=nx; state.y=ny;
+  state.surfing=(state.map==="route13" && ch==="I");
+  renderPlayer();
   if(ex){
     if(ex.require && !state.flags[ex.require]){
       state.x-=dx; state.y-=dy; renderPlayer();
       say("ガイド",ex.deny || "まだ先へ進めない。");
       return;
     }
-    state.map=ex.to; state.x=ex.tx; state.y=ex.ty;
+    state.map=ex.to; state.x=ex.tx; state.y=ex.ty; state.surfing=false;
     const safe=nearestSafeTile(state.map,state.x,state.y);
     state.x=safe.x; state.y=safe.y;
     renderMap(); say("移動",ex.msg); autosave("map");
     return;
   }
   if(checkTrainerSight()) return;
-  const isWaterEncounter = state.map==="route13" && ch==="P";
+  const isWaterEncounter = state.map==="route13" && ch==="I";
   if((ch==="G" || isWaterEncounter) && !state.battle){
     state.grassSteps=(state.grassSteps||0)+1;
     const encounter = Math.random()<0.14 || state.grassSteps>=10;
@@ -5761,7 +5811,75 @@ function handleGymPuzzle(flag){
   return true;
 }
 
+
+function populateDebugMaps(){
+  const sel=$("debugMapSelect"); if(!sel)return;
+  sel.innerHTML="";
+  Object.entries(maps).forEach(([id,m])=>{
+    const o=document.createElement("option");
+    o.value=id;o.textContent=`${m.name} (${id})`;sel.appendChild(o);
+  });
+  sel.value=state.map;
+}
+function debugWarp(){
+  const id=$("debugMapSelect").value, m=maps[id];if(!m)return;
+  state.map=id;state.x=m.start?.x??1;state.y=m.start?.y??1;state.surfing=false;
+  const safe=nearestSafeTile(id,state.x,state.y);state.x=safe.x;state.y=safe.y;
+  debugModal.classList.add("hidden");renderMap();renderHUD();autosave("debug warp");
+  say("デバッグ",`${m.name}へワープした。`);
+}
+function debugSetAllBadges(){
+  const keys=["gym1","gym2","gym3","gym4","gym5","gym6","gym7","gym8"];
+  const turnOn=!keys.every(k=>state.flags[k]);
+  keys.forEach(k=>state.flags[k]=turnOn);
+  recountBadges();renderHUD();autosave("debug badges");
+  $("debugOutput").textContent=turnOn?"8バッジをONにしました。":"8バッジをOFFにしました。";
+}
+function debugBattleSelfTest(){
+  try{
+    const a=makeMon(state.starter||"コノレサ",20);
+    const b=makeMon("イシツブテ",20);
+    a.stages={atk:0,def:0,spa:0,spd:0,spe:0,acc:0};
+    b.stages={atk:0,def:0,spa:0,spd:0,spe:0,acc:0};
+    const move=(a.moves||[]).find(x=>MOVES[x]&&MOVES[x].category!=="変化")||"たいあたり";
+    const dmg=calcDamage(a,b,move);
+    const ai=chooseEnemyMove(b,a);
+    if(!MOVES[ai] && ai!=="わるあがき") throw new Error("AIが未定義技を選択");
+    $("debugOutput").textContent=`戦闘セルフテスト: OK\n${a.name}の${move} 推定ダメージ=${dmg.damage}\nAI選択=${ai}`;
+  }catch(e){
+    $("debugOutput").textContent=`戦闘セルフテスト: NG\n${e.message}`;
+  }
+}
+function debugDiagnose(){
+  const issues=[];
+  if(!maps[state.map]) issues.push("現在マップが存在しない");
+  if(!state.starter) issues.push("御三家未選択");
+  if(state.mons.length===0) issues.push("手持ち0匹");
+  if(state.flags.gym5 && !state.flags.emergencyMeeting) issues.push("第5ジム後：ヒカリの緊急会議へ");
+  if(state.flags.gym7 && !state.flags.strategyMeeting) issues.push("第7ジム後：ユキナギの作戦会議へ");
+  if(state.flags.valdBattle && !state.flags.legendCalm) issues.push("ヴァルド後：伝説戦へ");
+  if(state.flags.elite4 && !state.flags.champion) issues.push("四天王突破済み：ハルク戦へ");
+  const badTrainerMoves=[];
+  Object.entries(TRAINERS).forEach(([id,d])=>(d.team||[]).forEach(([sp])=>{if(!SPECIES[sp])badTrainerMoves.push(`${id}:${sp}`)}));
+  if(badTrainerMoves.length) issues.push(`未定義手持ち ${badTrainerMoves.length}件`);
+  $("debugOutput").textContent=[
+    `saveVersion=${state.saveVersion}`,
+    `map=${state.map} (${maps[state.map]?.name||"?"})`,
+    `badges=${state.badges}`,
+    `starter=${state.starter||"未選択"}`,
+    `legend=${state.legendVersion||"未決定"}`,
+    `surf=${state.surfing?"ON":"OFF"}`,
+    issues.length?`要確認:\n- ${issues.join("\n- ")}`:"進行診断: 大きな異常は見つかりませんでした。"
+  ].join("\n");
+}
+function openDebug(){
+  populateDebugMaps();
+  debugModal.classList.remove("hidden");
+  debugDiagnose();
+}
+
 function action(){
+  if(!titleScreen.classList.contains("hidden") || !cutsceneOverlay.classList.contains("hidden") || !battleModal.classList.contains("hidden") || !debugModal.classList.contains("hidden")) return;
   const [fx,fy]=frontPos();
   const n=npcAt(fx,fy);
   if(n){
@@ -5828,7 +5946,7 @@ function action(){
     if(n.flag==="legendCalm" && !state.flags.legendCalm){
       runCutscene("legend_battle_intro",[
         {effect:"shake"},{banner:"LEGENDARY BATTLE",duration:1000},
-        {speaker:"語り",text:"暴走する二体の伝説が海を揺らす。戦いを通じて怒りを鎮めろ！"}
+        {speaker:"語り",text:`ルミナークとノクザークが同時に姿を現した。主人公の前に${state.legendVersion||"一体"}が立ちはだかる。戦いを通じて怒りを鎮めろ！`}
       ],()=>startTrainerBattle("legendCalm",TRAINERS.legendCalm));
       return;
     }
@@ -6639,6 +6757,25 @@ function action(){
   say("ガイド","目の前には特に何もない。");
 }
 const SAVE_KEY="alciaSave";
+
+const CURRENT_SAVE_VERSION=43;
+function migrateLoadedSave(s){
+  if(!s || typeof s!=="object") return s;
+  const old=s.saveVersion||0;
+  s.flags ??= {};
+  s.bag ??= {};
+  s.dex ??= {seen:{},caught:{}};
+  s.mons ??= [];
+  s.box ??= [];
+  if(old<43){
+    s.surfing=false;
+    s.legendVersion ??= null;
+    [...s.mons,...s.box].forEach(m=>{ if(m) m._statsMigrated=false; });
+  }
+  s.saveVersion=CURRENT_SAVE_VERSION;
+  return s;
+}
+
 let autosaveTimer=null;
 function autosave(reason=""){
   try{
@@ -6674,7 +6811,7 @@ function load(){
   const found=findSaveData();
   if(!found){ say("ロード","セーブデータがない。"); return; }
   try{
-    const s=JSON.parse(found.raw);
+    const s=migrateLoadedSave(JSON.parse(found.raw));
     Object.assign(state,s);
     normalizeState();
     ensureCurrentPositionSafe();
@@ -6694,6 +6831,7 @@ function load(){
 document.querySelectorAll(".choice").forEach(btn=>{
   btn.addEventListener("click",()=>{
     state.starter=btn.dataset.starter;
+    if(!state.legendVersion) state.legendVersion=Math.random()<.5?"ルミナーク":"ノクザーク";
     state.mons=[makeMon(state.starter,5)];
     registerSeen(state.starter); registerCaught(state.starter);
     state.activeIndex=0;
@@ -6733,9 +6871,20 @@ $("action").addEventListener("click",action);
 $("saveBtn").addEventListener("click",save);
 $("loadBtn").addEventListener("click",load);
 $("helpBtn").addEventListener("click",()=>helpModal.classList.remove("hidden"));
+$("debugBtn").addEventListener("click",openDebug);
+$("closeDebug").addEventListener("click",()=>debugModal.classList.add("hidden"));
+$("debugWarp").addEventListener("click",debugWarp);
+$("debugHeal").addEventListener("click",()=>{healParty();autosave("debug heal");$("debugOutput").textContent="手持ちを全回復しました。";});
+$("debugBalls").addEventListener("click",()=>{["モンスターボール","スーパーボール","ハイパーボール","ダイブボール"].forEach(k=>state.bag[k]=(state.bag[k]||0)+10);renderHUD();autosave("debug balls");$("debugOutput").textContent="各ボールを10個追加しました。";});
+$("debugMoney").addEventListener("click",()=>{state.money+=10000;renderHUD();autosave("debug money");$("debugOutput").textContent="所持金を10000追加しました。";});
+$("debugLevel").addEventListener("click",()=>{state.mons.forEach(m=>{m.level+=5;m.maxHp+=10;m.hp=m.maxHp;refreshCombatStats(m);});renderHUD();autosave("debug level");$("debugOutput").textContent="手持ち全員のLvを5上げました。";});
+$("debugBadges").addEventListener("click",debugSetAllBadges);
+$("debugBattleTest").addEventListener("click",debugBattleSelfTest);
+$("debugDiagnose").addEventListener("click",debugDiagnose);
 $("closeHelp").addEventListener("click",()=>helpModal.classList.add("hidden"));
 
 document.addEventListener("keydown",(e)=>{
+  if(["INPUT","SELECT","TEXTAREA","BUTTON"].includes(document.activeElement?.tagName)) return;
   const k=e.key.toLowerCase();
   if(["arrowup","w"].includes(k)){e.preventDefault();move(0,-1,"up");}
   else if(["arrowdown","s"].includes(k)){e.preventDefault();move(0,1,"down");}
@@ -6763,7 +6912,7 @@ $("continueBtn").addEventListener("click",()=>{
   const found=findSaveData();
   if(!found){return;}
   try{
-    Object.assign(state,JSON.parse(found.raw));
+    Object.assign(state,migrateLoadedSave(JSON.parse(found.raw)));
     normalizeState();ensureCurrentPositionSafe();
     localStorage.setItem(SAVE_KEY,JSON.stringify(state));
     if(state.starter && state.mons.length) starterModal.classList.add("hidden");
