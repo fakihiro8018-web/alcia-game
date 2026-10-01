@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>アルシア地方 マップ移動版 α31 道路トレーナー・ナガラジム強化版</title>
+<title>アルシア地方 マップ移動版 α32 野生戦起動修正版</title>
 <style>
 :root{
   --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
@@ -100,7 +100,7 @@ h1{font-size:20px;margin:4px 0 10px}
 </head>
 <body>
 <main>
-  <h1>アルシア地方 マップ移動版 α31 道路トレーナー・ナガラジム強化版</h1>
+  <h1>アルシア地方 マップ移動版 α32 野生戦起動修正版</h1>
   <div id="topbar">
     <span id="mapName" class="badge">ヤハギタウン</span>
     <span id="party" class="badge">相棒：未選択</span>
@@ -234,7 +234,7 @@ h1{font-size:20px;margin:4px 0 10px}
   <div class="modalCard">
     <h2>遊び方</h2>
     <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
-    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α31では各道路のトレーナー数を大幅に増やしました。1番道路のトレーナーは全員ノーマル技のみ。ナガラジムには3人のジムトレーナーを配置し、全員倒すまでガンジには挑戦できません。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α32では野生ポケモン出現時に戦闘画面へ移れなかった実行時エラーを修正しました。草むらでエンカウントすると、そのまま技選択・捕獲・逃走ができるバトル画面へ切り替わります。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
     <button id="closeHelp" class="menuBtn">閉じる</button>
   </div>
 </div>
@@ -4348,6 +4348,8 @@ function startWildBattle(name){
   let idx=healthyIndex(state.activeIndex);
   if(idx<0){ say("ガイド","戦えるポケモンがいない。ポケモンセンターで回復しよう。"); return; }
   state.activeIndex=idx;
+  const mon=activeMon();
+  if(!mon){ say("ガイド","先頭のポケモンを確認できない。"); return; }
   clearBattleEnvironment();
   const enemy=makeMon(name,wildLevelForMap());
   registerSeen(name);
@@ -4357,6 +4359,7 @@ function startWildBattle(name){
   state.battle={kind:"wild",enemy,enemyTeam:[enemy],enemyIndex:0,trainerName:null,reward:0,flag:null,log:logs.join(" ")};
   battleModal.classList.remove("hidden");
   renderBattle();
+  renderHUD();
 }
 function startTrainerBattle(flag,def){
   let idx=healthyIndex(state.activeIndex);
@@ -4841,7 +4844,6 @@ function move(dx,dy,dir){
     if(encounter){
       state.grassSteps=0;
       const wild=randomWild();
-      say("草むら","野生の"+wild+"が飛び出してきた！");
       startWildBattle(wild);
     }
   }else if(ch!=="G"){
@@ -5637,11 +5639,11 @@ function action(){
   say("ガイド","目の前には特に何もない。");
 }
 function save(){
-  localStorage.setItem("alciaMapAlpha31",JSON.stringify(state));
+  localStorage.setItem("alciaMapAlpha32",JSON.stringify(state));
   say("セーブ","現在の冒険を保存した。");
 }
 function load(){
-  const raw=localStorage.getItem("alciaMapAlpha31");
+  const raw=localStorage.getItem("alciaMapAlpha32");
   if(!raw){ say("ロード","セーブデータがない。"); return; }
   try{
     const s=JSON.parse(raw);
