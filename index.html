@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>アルシア地方 マップ移動版 α32 野生戦起動修正版</title>
+<title>アルシア地方 α41 最終修正版・完成版1.0候補</title>
 <style>
 :root{
   --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
@@ -96,11 +96,81 @@ h1{font-size:20px;margin:4px 0 10px}
   main{padding:8px} #controls{grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,54px)}
   .starters{grid-template-columns:1fr}
 }
+
+/* α34 mobile polish */
+@media(max-width:520px){
+  #menuRow{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  #menuRow .menuBtn{
+    min-width:0 !important;
+    width:100% !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+    font-size:12px !important;
+    padding:9px 4px !important;
+  }
+  #statusRow{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:5px !important;
+  }
+  .statusChip{
+    min-width:0 !important;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    text-align:center;
+  }
+  .systemCard{
+    max-height:92vh !important;
+    padding-bottom:16px !important;
+  }
+  #battleActions,#moveActions{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #battleActions{
+    position:sticky;
+    bottom:0;
+    background:#1d2833;
+    padding-top:8px;
+    padding-bottom:max(8px,env(safe-area-inset-bottom));
+    z-index:3;
+  }
+  .sysBtn{min-width:0;font-size:13px;padding:11px 6px}
+  #map{touch-action:manipulation}
+}
+
+
+.dexDetailHero{background:#111923;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.dexMeta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.moveTutorMove{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:9px;border-bottom:1px solid #31404e}
+.puzzleChip{font-size:11px;padding:3px 7px;border:1px solid #6c8192;border-radius:999px}
+@media(max-width:520px){.dexMeta{grid-template-columns:1fr}}
+
+/* α40 final candidate polish */
+#titleScreen{position:fixed;inset:0;z-index:100;background:linear-gradient(#0c1520,#162635);display:flex;align-items:center;justify-content:center;padding:20px}
+#titleCard{width:min(520px,100%);background:#101923;border:1px solid #65788a;border-radius:22px;padding:22px;text-align:center;box-shadow:0 24px 70px #000b}
+#titleCard h1{font-size:28px;margin:0 0 6px}
+#titleCard .sub{color:#aebbc6;margin-bottom:16px}
+.titleButtons{display:grid;gap:10px}
+.titleBtn{border:1px solid #72879a;background:#203246;color:#fff;border-radius:14px;padding:14px;font-size:16px;font-weight:700}
+.titleBtn:disabled{opacity:.45}
+#autosaveToast{position:fixed;right:10px;top:10px;z-index:90;background:#0d1a24e8;border:1px solid #61788b;border-radius:999px;padding:7px 11px;font-size:11px;opacity:0;transition:opacity .2s;pointer-events:none}
+#autosaveToast.show{opacity:1}
+.versionBadge{font-size:11px;color:#9fb0be;margin-top:12px}
+.dangerBtn{background:#3a1b1b;border-color:#7b4a4a}
+@media(max-width:520px){
+  #titleCard h1{font-size:24px}
+  #titleCard{padding:18px}
+}
 </style>
 </head>
 <body>
 <main>
-  <h1>アルシア地方 マップ移動版 α32 野生戦起動修正版</h1>
+  <h1>アルシア地方 α41 最終修正版・完成版1.0候補</h1>
   <div id="topbar">
     <span id="mapName" class="badge">ヤハギタウン</span>
     <span id="party" class="badge">相棒：未選択</span>
@@ -201,6 +271,29 @@ h1{font-size:20px;margin:4px 0 10px}
   </div>
 </div>
 
+
+<div id="dexDetailModal" class="hidden">
+  <div class="systemCard">
+    <div class="systemTitle"><h2>図鑑詳細</h2><button id="closeDexDetail" class="closeBtn">閉じる</button></div>
+    <div id="dexDetailContent"></div>
+  </div>
+</div>
+
+<div id="moveTutorModal" class="hidden">
+  <div class="systemCard">
+    <div class="systemTitle"><h2>技思い出し</h2><button id="closeMoveTutor" class="closeBtn">閉じる</button></div>
+    <div id="moveTutorContent"></div>
+  </div>
+</div>
+
+
+<div id="ballModal" class="hidden">
+  <div class="systemCard">
+    <div class="systemTitle"><h2>ボールを選ぶ</h2><button id="closeBall" class="closeBtn">閉じる</button></div>
+    <div id="ballList"></div>
+  </div>
+</div>
+
 <div id="shopModal" class="hidden">
   <div class="systemCard">
     <div class="systemTitle"><h2>フレンドリィショップ</h2><button id="closeShop" class="closeBtn">閉じる</button></div>
@@ -210,6 +303,20 @@ h1{font-size:20px;margin:4px 0 10px}
 </div>
 
 
+
+<div id="titleScreen">
+  <div id="titleCard">
+    <h1>アルシア地方</h1>
+    <div class="sub">人とポケモン、信頼をめぐる冒険</div>
+    <div class="titleButtons">
+      <button id="continueBtn" class="titleBtn">つづきから</button>
+      <button id="newGameBtn" class="titleBtn">はじめから</button>
+      <button id="resetSaveBtn" class="titleBtn dangerBtn">セーブデータを消す</button>
+    </div>
+    <div class="versionBadge">Version α40 Final Candidate</div>
+  </div>
+</div>
+<div id="autosaveToast">オートセーブしました</div>
 <div id="eventBanner" class="hidden"></div>
 <div id="cutsceneOverlay" class="hidden">
   <div id="cutsceneBox">
@@ -234,7 +341,7 @@ h1{font-size:20px;margin:4px 0 10px}
   <div class="modalCard">
     <h2>遊び方</h2>
     <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
-    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α32では野生ポケモン出現時に戦闘画面へ移れなかった実行時エラーを修正しました。草むらでエンカウントすると、そのまま技選択・捕獲・逃走ができるバトル画面へ切り替わります。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α41では13番水路で水上エンカウントと視線トレーナーが機能するよう修正し、図鑑に終盤・伝説・四天王関連の追加ポケモンを登録しました。ステルスロックAI、まもる連続成功率、でんじはの無効判定、旧セーブ能力値移行を修正。ボールは自動消費ではなく自分で選択可能になり、「はじめから」と御三家選択時の初期セーブも安全化しました。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
     <button id="closeHelp" class="menuBtn">閉じる</button>
   </div>
 </div>
@@ -245,9 +352,10 @@ h1{font-size:20px;margin:4px 0 10px}
 const $ = (id)=>document.getElementById(id);
 const mapEl=$("map"), playerEl=$("player"), mapNameEl=$("mapName"), partyEl=$("party");
 const dialogTextEl=$("dialogText"), starterModal=$("starterModal"), helpModal=$("helpModal");
-const battleModal=$("battleModal"), bagModal=$("bagModal"), partyModal=$("partyModal"), boxModal=$("boxModal"), dexModal=$("dexModal"), detailModal=$("detailModal"), shopModal=$("shopModal");
+const battleModal=$("battleModal"), bagModal=$("bagModal"), partyModal=$("partyModal"), boxModal=$("boxModal"), dexModal=$("dexModal"), dexDetailModal=$("dexDetailModal"), detailModal=$("detailModal"), moveTutorModal=$("moveTutorModal"), ballModal=$("ballModal"), shopModal=$("shopModal");
 const moneyChip=$("moneyChip"), ballsChip=$("ballsChip"), partyCountChip=$("partyCountChip"), expChip=$("expChip");
 const cutsceneOverlay=$("cutsceneOverlay"), eventBanner=$("eventBanner");
+const titleScreen=$("titleScreen"), autosaveToast=$("autosaveToast");
 
 const state = {
   map:"yahagi", x:5, y:7, dir:"up", starter:null,
@@ -265,7 +373,7 @@ const state = {
   activeIndex:0,
   battle:null,
 
-  flags:{ professor:false, caught:false, grunt1:false, gym1:false, friend2:false, gym2:false, rival1:false, gym3:false, gym4:false, roza1:false, mirei1:false, bothMidGyms:false, rival2:false, friend3:false, yunoChecked:false, gym5:false, emergencyMeeting:false, rentStays:false, ruinsBattle:false, gym6:false, rival3:false, museumClue:false, gym7:false, strategyMeeting:false, hqUnlocked:false, hqGrunts:false, selmaBattle:false, rentLeavesFinal:false, mireiFinal:false, rozaFinal:false, execsFinal:false, freeGuardians:false, valdBattle:false, legendCalm:false, eldTruth:false, friendFinal:false, gym8:false, route19Battle:false, rivalFinal:false, leagueStart:false, elite1:false, elite2:false, elite3:false, elite4:false, champion:false, ending:false, nationalDex:false, legendCaught:false, noxielAppears:false, noxielCaught:false, postgameClear:false, tower7:false, tower21:false, factoryLap1:false, tournamentWin:false, rematchUnlock:false, rematchGanji:false, rematchSuzune:false, rematchGenzou:false, rematchReika:false, rematchKaito:false, rematchTetsuji:false, rematchSerina:false, rematchRento:false, allGymRematches:false, eliteRematchStart:false, eliteRematch1:false, eliteRematch2:false, eliteRematch3:false, eliteRematch4:false, hulkRematch:false, mountainTrainer:false, mountainItem:false, guardianShrine:false, trialGanrai:false, trialEkirei:false, trialDouga:false, allGuardianTrials:false, ridgeSigil:false, tideSigil:false, ancientSigil:false, snowSigil:false, flameSigil:false, allSigils:false, lugiaEvent:false, dialgaPalkiaEvent:false, kyuremEvent:false, heatranEvent:false, boundaryEvent:false, momGift:false, yahagiBerry:false, mioBall:false, route1Trainer:false, route1Potion:false, catchTutorial:false, route2Trainer:false, route2Berry:false, sasanoQuest:false, route3Trainer:false, route3HiddenItem:false, nagaraStoneQuest:false, nagaraRareStone:false, kisoWoodQuest:false, kisoWood:false, route5Trainer:false, route5Feather:false, azumiBirdQuest:false, route6Trainer:false, route6Item:false, route7Trainer:false, route7Item:false, senkouMineQuest:false, senkouApple:false, tsuruneHerbQuest:false, tsuruneHerb:false, route8Trainer:false, route8Stone:false, tenryuLoreQuest:false, tenryuArchiveClue:false, route9Trainer:false, route9Item:false, shioFishingQuest:false, shioShell:false, route10Trainer:false, route10Item:false, yunoInnQuest:false, yunoTowel:false, yuragiSupplyQuest:false, yuragiSupply:false, miyamaPhotoQuest:false, miyamaPhoto:false, yukinagiFishQuest:false, yukinagiIce:false, tsubakiForgeQuest:false, tsubakiMetal:false, route17Trainer:false, route17Item:false, sekisouResearchQuest:false, sekisouTablet:false, route18Trainer:false, route18Item:false, setsugetsuHouseQuest:false, setsugetsuIceArt:false, route19Item:false, suimonLodgeQuest:false, suimonGuestbook:false, route20Trainer:false, route20Item:false, sekiganePrep:false, postMomGift:false, lostIslandTablet:false, lostIslandItem:false, tideItem:false, snowPostItem:false, flamePostItem:false }
+  flags:{ friend1:false, professor:false, caught:false, grunt1:false, gym1:false, friend2:false, gym2:false, rival1:false, gym3:false, gym4:false, roza1:false, mirei1:false, bothMidGyms:false, rival2:false, friend3:false, yunoChecked:false, gym5:false, emergencyMeeting:false, rentStays:false, ruinsBattle:false, gym6:false, rival3:false, museumClue:false, gym7:false, strategyMeeting:false, hqUnlocked:false, hqGrunts:false, selmaBattle:false, rentLeavesFinal:false, mireiFinal:false, rozaFinal:false, execsFinal:false, freeGanrai:false, freeEkirei:false, freeDouga:false, freeGuardians:false, valdBattle:false, legendCalm:false, eldTruth:false, friendFinal:false, gym8:false, route19Battle:false, rivalFinal:false, leagueStart:false, elite1:false, elite2:false, elite3:false, elite4:false, champion:false, ending:false, nationalDex:false, legendCaught:false, noxielAppears:false, noxielCaught:false, postgameClear:false, tower7:false, tower21:false, factoryLap1:false, tournamentWin:false, rematchUnlock:false, rematchGanji:false, rematchSuzune:false, rematchGenzou:false, rematchReika:false, rematchKaito:false, rematchTetsuji:false, rematchSerina:false, rematchRento:false, allGymRematches:false, eliteRematchStart:false, eliteRematch1:false, eliteRematch2:false, eliteRematch3:false, eliteRematch4:false, hulkRematch:false, mountainTrainer:false, mountainItem:false, guardianShrine:false, trialGanrai:false, trialEkirei:false, trialDouga:false, allGuardianTrials:false, ridgeSigil:false, tideSigil:false, ancientSigil:false, snowSigil:false, flameSigil:false, allSigils:false, lugiaEvent:false, dialgaPalkiaEvent:false, kyuremEvent:false, heatranEvent:false, boundaryEvent:false, gym2Trainer1:false,gym2Trainer2:false,gym3Trainer1:false,gym3Trainer2:false,gym4Trainer1:false,gym4Trainer2:false,gym5Trainer1:false,gym5Trainer2:false,gym6Trainer1:false,gym6Trainer2:false,gym7Trainer1:false,gym7Trainer2:false,gym8Trainer1:false,gym8Trainer2:false,momGift:false, yahagiBerry:false, mioBall:false, route1Trainer:false, route1Potion:false, catchTutorial:false, route2Trainer:false, route2Berry:false, sasanoQuest:false, route3Trainer:false, route3HiddenItem:false, nagaraStoneQuest:false, nagaraRareStone:false, kisoWoodQuest:false, kisoWood:false, route5Trainer:false, route5Feather:false, azumiBirdQuest:false, route6Trainer:false, route6Item:false, route7Trainer:false, route7Item:false, senkouMineQuest:false, senkouApple:false, tsuruneHerbQuest:false, tsuruneHerb:false, route8Trainer:false, route8Stone:false, tenryuLoreQuest:false, tenryuArchiveClue:false, route9Trainer:false, route9Item:false, shioFishingQuest:false, shioShell:false, route10Trainer:false, route10Item:false, yunoInnQuest:false, yunoTowel:false, yuragiSupplyQuest:false, yuragiSupply:false, miyamaPhotoQuest:false, miyamaPhoto:false, yukinagiFishQuest:false, yukinagiIce:false, tsubakiForgeQuest:false, tsubakiMetal:false, route17Trainer:false, route17Item:false, sekisouResearchQuest:false, sekisouTablet:false, route18Trainer:false, route18Item:false, setsugetsuHouseQuest:false, setsugetsuIceArt:false, route19Item:false, suimonLodgeQuest:false, suimonGuestbook:false, route20Trainer:false, route20Item:false, sekiganePrep:false, postMomGift:false, lostIslandTablet:false, lostIslandItem:false, tideItem:false, snowPostItem:false, flamePostItem:false }
 };
 
 const W=12, H=10;
@@ -288,14 +396,16 @@ const maps = {
     start:{x:5,y:7},
     npcs:[
       {x:4,y:6,name:"お母さん",text:"準備は大丈夫？ 無理はしないでね。",flag:"momGift"},
+      {x:8,y:7,name:"親友",text:"御三家を選んだなら、最初の勝負をしよう！",flag:"friend1"},
       {x:7,y:5,name:"町の少年",text:"ヒカリシティはここから西側だよ。アルシア地方で一番大きい街なんだって！"},
       {x:2,y:4,name:"おじいさん",text:"昔、この辺りにも山から大きな鳴き声が響いたことがあったのう。"},
       {x:8,y:6,name:"散歩中の女性",text:"町の花壇にオレンのみを植えたの。旅立つ前に一つ持っていく？",flag:"yahagiBerry"}
     ],
     exits:[
-      {x:0,y:5,to:"route1",tx:10,ty:5,msg:"西へ進み、1番道路に入った。"},
+      {x:0,y:5,to:"route1",tx:10,ty:5,msg:"西へ進み、1番道路に入った。",require:"friend1",deny:"旅立つ前に親友との最初の勝負をしよう。"},
       {x:3,y:3,to:"homeInterior",tx:5,ty:8,msg:"自宅に入った。"},
-      {x:9,y:3,to:"mioLab",tx:5,ty:8,msg:"ミオの研究準備所に入った。"}
+      {x:9,y:3,to:"mioLab",tx:5,ty:8,msg:"ミオの研究準備所に入った。"},
+      {x:5,y:9,to:"route13",tx:5,ty:8,msg:"南の水路へ出た。",require:"gym5",deny:"この水路を進むには第5バッジとなみのりが必要だ。"}
     ],
     signs:[
       {x:2,y:3,text:"主人公の家"},
@@ -518,8 +628,9 @@ const maps = {
       {x:5,y:2,name:"ガンジ",text:"おお！ 挑戦者か！ 石の強さ、見せてやる！",flag:"gym1"},
       {x:3,y:6,name:"ジムトレーナー・タクミ",text:"まずは俺を突破してみろ！ 岩場の基本を教えてやる！",flag:"nagaraGymTrainer1"},
       {x:8,y:6,name:"ジムトレーナー・ユウナ",text:"岩タイプは硬いだけじゃないよ。戦い方を見てみて！",flag:"nagaraGymTrainer2"},
-      {x:8,y:3,name:"ジムトレーナー・ゴウ",text:"ガンジさんに挑む前の最後の関門だ！",flag:"nagaraGymTrainer3"}
-    ],
+      {x:8,y:3,name:"ジムトレーナー・ゴウ",text:"ガンジさんに挑む前の最後の関門だ！",flag:"nagaraGymTrainer3"},
+      {x:2,y:3,name:"石盤",text:"古い石盤がある。",flag:"gym1PuzzleA"},
+      {x:9,y:3,name:"岩スイッチ",text:"大きな岩のスイッチだ。",flag:"gym1PuzzleB"}],
     exits:[
       {x:5,y:9,to:"nagara",tx:3,ty:4,msg:"ナガラシティへ出た。"}
     ],
@@ -759,8 +870,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"スズネ",text:"いい風ですね。あなたのポケモンたちも、きっと気持ちよく戦えると思います。",flag:"gym2"}
-    ],
+      {x:5,y:2,name:"スズネ",text:"いい風ですね。あなたのポケモンたちも、きっと気持ちよく戦えると思います。",flag:"gym2"},
+      {x:3,y:6,name:"ジムトレーナー",text:"風を読んで戦おう！",flag:"gym2Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"スズネさんに挑む前に私を越えて！",flag:"gym2Trainer2"},
+      {x:2,y:3,name:"風向計",text:"風向きを合わせる装置だ。",flag:"gym2PuzzleA"},
+      {x:9,y:3,name:"送風機",text:"強い風を送る装置だ。",flag:"gym2PuzzleB"}],
     exits:[
       {x:5,y:9,to:"azumi",tx:3,ty:4,msg:"アズミシティへ出た。"}
     ],
@@ -848,8 +962,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"ゲンゾウ",text:"俺の土地に来たなら、地面の強さを味わっていけ。",flag:"gym3"}
-    ],
+      {x:5,y:2,name:"ゲンゾウ",text:"俺の土地に来たなら、地面の強さを味わっていけ。",flag:"gym3"},
+      {x:3,y:6,name:"ジムトレーナー",text:"地面をしっかり踏みしめろ！",flag:"gym3Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"砂嵐の中でも戦えるかな？",flag:"gym3Trainer2"},
+      {x:2,y:3,name:"地面スイッチ",text:"重量で沈む床板だ。",flag:"gym3PuzzleA"},
+      {x:9,y:3,name:"岩盤レバー",text:"岩盤を動かすレバーだ。",flag:"gym3PuzzleB"}],
     exits:[
       {x:5,y:9,to:"senkou",tx:3,ty:4,msg:"センコウシティへ出た。"}
     ],
@@ -935,8 +1052,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"レイカ",text:"あなた、本当に勝てると思って来たの？",flag:"gym4"}
-    ],
+      {x:5,y:2,name:"レイカ",text:"あなた、本当に勝てると思って来たの？",flag:"gym4"},
+      {x:3,y:6,name:"ジムトレーナー",text:"毒はじわじわ効くのよ。",flag:"gym4Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"レイカさんの前に私と勝負！",flag:"gym4Trainer2"},
+      {x:2,y:3,name:"薬草バルブ",text:"香りの流れを変えるバルブだ。",flag:"gym4PuzzleA"},
+      {x:9,y:3,name:"毒霧装置",text:"毒霧を制御する装置だ。",flag:"gym4PuzzleB"}],
     exits:[
       {x:5,y:9,to:"tsurune",tx:3,ty:4,msg:"ツルネシティへ出た。"}
     ],
@@ -1161,6 +1281,7 @@ const maps = {
     exits:[
       {x:5,y:0,to:"route9",tx:5,ty:8,msg:"北へ進み、9番道路へ戻った。"},
       {x:11,y:5,to:"route10",tx:1,ty:5,msg:"東へ進み、10番道路に入った。"},
+      {x:0,y:7,to:"route11",tx:10,ty:4,msg:"西へ進み、11番道路に入った。"},
       {x:3,y:3,to:"shionagiGym",tx:5,ty:8,msg:"シオナギジムに入った。",require:"yunoChecked",deny:"カイトは不在だ。先にユノハナ方面を調べよう。"},
       {x:8,y:3,to:"shioHarbor",tx:5,ty:8,msg:"シオナギ港に入った。"},
       {x:3,y:8,to:"shioCenter",tx:5,ty:8,msg:"シオナギポケモンセンターに入った。"}
@@ -1229,6 +1350,78 @@ const maps = {
     ],
     signs:[{x:8,y:3,text:"海岸・謎の施設方面"}]
   },
+
+  route11:{
+    name:"11番道路（カナデ方面・西進）",
+    rows:["TTTTTTTTTTTT","TGGGG..GGGGT","TGGGG..GGGGT","T..........T","EPPPPPPPPPPE","T.PGGGGG.P.T","T.PGGGGG.P.T","T..........T","TGGGG..GGGGT","TTTTTTTTTTTT"],
+    start:{x:10,y:4},
+    npcs:[
+      {x:7,y:3,name:"サイクリング",text:"海風の道は気持ちいいよ！ でも勝負は本気！",flag:"route11TrainerA"},
+      {x:3,y:7,name:"ベテラントレーナー",text:"シオナギを越えてきた実力、見せてもらおう。",flag:"route11TrainerB"}
+    ],
+    exits:[
+      {x:11,y:4,to:"shionagi",tx:1,ty:7,msg:"東へ戻り、シオナギシティへ着いた。"},
+      {x:0,y:4,to:"kanade",tx:10,ty:5,msg:"西へ進み、カナデシティへ到着した。"}
+    ],
+    signs:[{x:9,y:4,text:"→ 東：シオナギシティ"},{x:2,y:4,text:"← 西：カナデシティ"}]
+  },
+  kanade:{
+    name:"カナデシティ",
+    rows:["TTTTTTTTTTTT","T....PP....T","T.RR.PP.RR.T","T.RD.PP.RD.T","EPPPPPPPPPPE","T....PP....T","T....PP....T","T.F..PP..F.T","T....PP....T","TTTTTTTTTTTT"],
+    start:{x:10,y:5},
+    npcs:[
+      {x:5,y:5,name:"音楽家",text:"カナデは旅人が集まる街。東西の文化が混ざって独特の音楽が生まれたんだ。"},
+      {x:3,y:7,name:"旅人",text:"西へ進むとカワミチタウン。そこから先は水路だよ。"}
+    ],
+    exits:[
+      {x:11,y:4,to:"route11",tx:1,ty:4,msg:"東へ進み、11番道路へ戻った。"},
+      {x:0,y:4,to:"route12",tx:10,ty:4,msg:"西へ進み、12番道路に入った。"}
+    ],
+    signs:[{x:10,y:4,text:"→ 東：シオナギ"},{x:1,y:4,text:"← 西：カワミチ方面"}]
+  },
+  route12:{
+    name:"12番道路（カワミチ方面・西進）",
+    rows:["TTTTTTTTTTTT","TGGGG..GGGGT","TGGGG..GGGGT","T..........T","EPPPPPPPPPPE","T.PGGGGG.P.T","T.PGGGGG.P.T","T..........T","TGGGG..GGGGT","TTTTTTTTTTTT"],
+    start:{x:10,y:4},
+    npcs:[
+      {x:7,y:3,name:"レンジャー",text:"川と森の境目はポケモンが多い。注意して進もう。",flag:"route12TrainerA"},
+      {x:3,y:7,name:"バックパッカー",text:"水路へ行く前に一戦どうだい？",flag:"route12TrainerB"}
+    ],
+    exits:[
+      {x:11,y:4,to:"kanade",tx:1,ty:4,msg:"東へ戻り、カナデシティへ着いた。"},
+      {x:0,y:4,to:"kawamichi",tx:10,ty:5,msg:"西へ進み、カワミチタウンへ到着した。"}
+    ],
+    signs:[{x:9,y:4,text:"→ 東：カナデシティ"},{x:2,y:4,text:"← 西：カワミチタウン"}]
+  },
+  kawamichi:{
+    name:"カワミチタウン",
+    rows:["TTTTTTTTTTTT","T....PP....T","T.RR.PP.RR.T","T.RD.PP.RD.T","EPPPPPPPPPPE","T....PP....T","T....PP....T","T.F..PP..F.T","TTTTTETTTTTT","TTTTTTTTTTTT"],
+    start:{x:10,y:5},
+    npcs:[
+      {x:5,y:5,name:"船頭",text:"南の水路はヤハギまで続いている。なみのりが使えれば通れるぞ。"},
+      {x:3,y:7,name:"町の人",text:"この町は川と海の物流で栄えてきたんだ。"}
+    ],
+    exits:[
+      {x:11,y:4,to:"route12",tx:1,ty:4,msg:"東へ進み、12番道路へ戻った。"},
+      {x:5,y:8,to:"route13",tx:5,ty:1,msg:"水路へ進んだ。",require:"gym5",deny:"この先は深い水路だ。第5バッジとなみのりが必要だ。"}
+    ],
+    signs:[{x:10,y:4,text:"→ 東：カナデ方面"},{x:5,y:7,text:"↓ 13番水路：ヤハギ方面"}]
+  },
+  route13:{
+    name:"13番道路（ヤハギ水路）",
+    rows:["TTTTTETTTTTT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TTTTTETTTTTT"],
+    start:{x:5,y:1},
+    npcs:[
+      {x:5,y:4,name:"つりびと",text:"こんな水路で会うなんてな！ 一勝負しよう！",flag:"route13TrainerA"},
+      {x:5,y:7,name:"かいパンやろう",text:"流れに乗るだけじゃダメだ。ポケモン勝負もな！",flag:"route13TrainerB"}
+    ],
+    exits:[
+      {x:5,y:0,to:"kawamichi",tx:5,ty:7,msg:"北へ戻り、カワミチタウンへ着いた。"},
+      {x:5,y:9,to:"yahagi",tx:5,ty:8,msg:"水路を抜け、ヤハギタウンへ帰ってきた。"}
+    ],
+    signs:[{x:5,y:1,text:"↑ カワミチ"},{x:5,y:8,text:"↓ ヤハギタウン"}]
+  },
+
   tenryuArchive:{
     name:"テンリュウ郷土資料室",
     rows:["WWWWWWWWWWWW","W..........W","W.S.S.S.S..W","W..........W","W..PPPPP...W","W..P...P...W","W..PPPPP...W","W....P.....W","W....P.....W","WWWWWEWWWWWW"],
@@ -1361,8 +1554,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"カイト",text:"調査も終わったし、今度はジムリーダーとして君を迎えるよ。",flag:"gym5"}
-    ],
+      {x:5,y:2,name:"カイト",text:"調査も終わったし、今度はジムリーダーとして君を迎えるよ。",flag:"gym5"},
+      {x:3,y:6,name:"ジムトレーナー",text:"水の流れを読めるか？",flag:"gym5Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"カイトさんに挑むならここを突破！",flag:"gym5Trainer2"},
+      {x:2,y:3,name:"第1水門",text:"水位を変える水門だ。",flag:"gym5PuzzleA"},
+      {x:9,y:3,name:"第2水門",text:"奥の水路へつながる水門だ。",flag:"gym5PuzzleB"}],
     exits:[
       {x:5,y:9,to:"shionagi",tx:3,ty:4,msg:"シオナギシティへ出た。"}
     ],
@@ -1734,8 +1930,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"テツジ",text:"細けえことは気にすんな！ こっちは全力で打つ！",flag:"gym6"}
-    ],
+      {x:5,y:2,name:"テツジ",text:"細けえことは気にすんな！ こっちは全力で打つ！",flag:"gym6"},
+      {x:3,y:6,name:"ジムトレーナー",text:"鋼のように粘り強く！",flag:"gym6Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"工房仕込みの守りを見せる！",flag:"gym6Trainer2"},
+      {x:2,y:3,name:"小歯車",text:"工房の小さな歯車だ。",flag:"gym6PuzzleA"},
+      {x:9,y:3,name:"主歯車",text:"大きな主歯車だ。",flag:"gym6PuzzleB"}],
     exits:[
       {x:5,y:9,to:"tsubaki",tx:3,ty:4,msg:"ツバキシティへ出た。"}
     ],
@@ -1908,8 +2107,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"セリナ",text:"それでは、静かに……でも本気で参りますわ。",flag:"gym7"}
-    ],
+      {x:5,y:2,name:"セリナ",text:"それでは、静かに……でも本気で参りますわ。",flag:"gym7"},
+      {x:3,y:6,name:"ジムトレーナー",text:"雪の中でも冷静に！",flag:"gym7Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"セリナ様に挑むなら私を越えて！",flag:"gym7Trainer2"},
+      {x:2,y:3,name:"氷床スイッチ",text:"滑る床の向きを変える。",flag:"gym7PuzzleA"},
+      {x:9,y:3,name:"氷柱スイッチ",text:"氷柱を動かすスイッチだ。",flag:"gym7PuzzleB"}],
     exits:[
       {x:5,y:9,to:"setsugetsu",tx:3,ty:4,msg:"セツゲツシティへ出た。"}
     ],
@@ -1957,7 +2159,7 @@ const maps = {
     start:{x:5,y:8},
     npcs:[
       {x:3,y:7,name:"端末",text:"金のリンゴ・闇のブドウ。守護者由来の暴走エネルギーを追加投入。"},
-      {x:7,y:6,name:"スプレマ団したっぱ",text:"ここから先は通さない！",flag:"hqGrunts"}
+      {x:8,y:7,name:"スプレマ団したっぱ",text:"ここから先は通さない！",flag:"hqGrunts"}
     ],
     exits:[
       {x:5,y:9,to:"hikariReturn",tx:5,ty:1,msg:"ヒカリシティへ戻った。"},
@@ -2029,8 +2231,8 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:3,y:5,name:"ミレイ",text:"ここから先は行かせないよ！",flag:"mireiFinal"},
-      {x:7,y:4,name:"ロザ",text:"ミレイを泣かせたわね……絶対許さない！",flag:"rozaFinal"}
+      {x:2,y:5,name:"ミレイ",text:"ここから先は行かせないよ！",flag:"mireiFinal"},
+      {x:8,y:5,name:"ロザ",text:"ミレイを泣かせたわね……絶対許さない！",flag:"rozaFinal"}
     ],
     exits:[
       {x:5,y:0,to:"guardianRoom",tx:5,ty:8,msg:"施設の拘束区画へ進んだ。",require:"execsFinal",deny:"ミレイとロザがまだ立ちはだかっている。"}
@@ -2053,9 +2255,9 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:3,y:3,name:"ガンライオウ",text:"拘束装置の中で弱っている。",flag:"freeGuardians"},
-      {x:5,y:3,name:"エキレイカ",text:"拘束装置の中で弱っている。",flag:"freeGuardians"},
-      {x:7,y:3,name:"ドウガエン",text:"拘束装置の中で弱っている。",flag:"freeGuardians"}
+      {x:3,y:3,name:"ガンライオウ",text:"拘束装置の中で弱っている。",flag:"freeGanrai"},
+      {x:5,y:3,name:"エキレイカ",text:"拘束装置の中で弱っている。",flag:"freeEkirei"},
+      {x:7,y:3,name:"ドウガエン",text:"拘束装置の中で弱っている。",flag:"freeDouga"}
     ],
     exits:[
       {x:5,y:0,to:"valdBeach",tx:5,ty:8,msg:"守護者と共に海岸へ向かった。",require:"freeGuardians",deny:"まず三守護者を解放しよう。"}
@@ -2171,8 +2373,11 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"レント",text:"ここまで君の実力は近くで見てきた。ここからは仲間じゃない。挑戦者とジムリーダーだ。",flag:"gym8"}
-    ],
+      {x:5,y:2,name:"レント",text:"ここまで君の実力は近くで見てきた。ここからは仲間じゃない。挑戦者とジムリーダーだ。",flag:"gym8"},
+      {x:3,y:6,name:"ジムトレーナー",text:"電気の速さについてこれる？",flag:"gym8Trainer1"},
+      {x:8,y:5,name:"ジムトレーナー",text:"レントさんへの最後の関門だ！",flag:"gym8Trainer2"},
+      {x:2,y:3,name:"配電盤A",text:"片側の回路を制御している。",flag:"gym8PuzzleA"},
+      {x:9,y:3,name:"配電盤B",text:"主回路へつながる配電盤だ。",flag:"gym8PuzzleB"}],
     exits:[
       {x:5,y:9,to:"hikariLeague",tx:10,ty:5,msg:"第8バッジを手に、ヒカリシティへ出た。",require:"gym8",deny:"レントとの勝負を終えよう。"}
     ],
@@ -3500,44 +3705,50 @@ const maps = {
 
 
 const MOVES = {
-  "たいあたり":{type:"ノーマル",power:40,pp:35},
-  "でんこうせっか":{type:"ノーマル",power:40,pp:30,priority:1},
-  "ひっかく":{type:"ノーマル",power:40,pp:35},
-  "このは":{type:"くさ",power:40,pp:40},
-  "つるのムチ":{type:"くさ",power:45,pp:25},
-  "メガドレイン":{type:"くさ",power:40,pp:15,drain:.5},
-  "ひのこ":{type:"ほのお",power:40,pp:25,status:"やけど",statusChance:.1},
-  "ほのおのキバ":{type:"ほのお",power:65,pp:15,status:"やけど",statusChance:.1},
-  "みずでっぽう":{type:"みず",power:40,pp:25},
-  "みずのはどう":{type:"みず",power:60,pp:20},
-  "でんきショック":{type:"でんき",power:40,pp:30,status:"まひ",statusChance:.1},
-  "スパーク":{type:"でんき",power:65,pp:20,status:"まひ",statusChance:.15},
-  "こなゆき":{type:"こおり",power:40,pp:25,status:"こおり",statusChance:.1},
-  "こおりのキバ":{type:"こおり",power:65,pp:15,status:"こおり",statusChance:.1},
-  "かぜおこし":{type:"ひこう",power:40,pp:35},
-  "つばさでうつ":{type:"ひこう",power:60,pp:35},
-  "どろかけ":{type:"じめん",power:35,pp:10,stat:"acc",stages:-1},
-  "じならし":{type:"じめん",power:60,pp:20,stat:"spe",stages:-1},
-  "いわおとし":{type:"いわ",power:50,pp:15},
-  "うちおとす":{type:"いわ",power:50,pp:15},
-  "どくばり":{type:"どく",power:30,pp:35,status:"どく",statusChance:.3},
-  "ベノムショック":{type:"どく",power:65,pp:10},
-  "むしくい":{type:"むし",power:60,pp:20},
-  "むしのていこう":{type:"むし",power:50,pp:20,stat:"atk",stages:-1},
-  "かみつく":{type:"あく",power:60,pp:25},
-  "だましうち":{type:"あく",power:60,pp:20},
-  "したでなめる":{type:"ゴースト",power:30,pp:30,status:"まひ",statusChance:.3},
-  "シャドーパンチ":{type:"ゴースト",power:60,pp:20},
-  "ねんりき":{type:"エスパー",power:50,pp:25},
-  "サイケこうせん":{type:"エスパー",power:65,pp:20},
-  "からてチョップ":{type:"かくとう",power:50,pp:25,highCrit:true},
-  "はっけい":{type:"かくとう",power:60,pp:10,status:"まひ",statusChance:.3},
-  "メタルクロー":{type:"はがね",power:50,pp:35,statSelf:"atk",stagesSelf:1,selfChance:.1},
-  "ラスターカノン":{type:"はがね",power:80,pp:10},
-  "ようせいのかぜ":{type:"フェアリー",power:40,pp:30},
-  "ドレインキッス":{type:"フェアリー",power:50,pp:10,drain:.75},
-  "りゅうのいぶき":{type:"ドラゴン",power:60,pp:20,status:"まひ",statusChance:.3},
-  "ドラゴンクロー":{type:"ドラゴン",power:80,pp:15}
+  "たいあたり":{type:"ノーマル",category:"物理",power:40,pp:35},
+  "でんこうせっか":{type:"ノーマル",category:"物理",power:40,pp:30,priority:1},
+  "ひっかく":{type:"ノーマル",category:"物理",power:40,pp:35},
+  "このは":{type:"くさ",category:"特殊",power:40,pp:40},
+  "つるのムチ":{type:"くさ",category:"物理",power:45,pp:25},
+  "メガドレイン":{type:"くさ",category:"特殊",power:40,pp:15,drain:.5},
+  "ひのこ":{type:"ほのお",category:"特殊",power:40,pp:25,status:"やけど",statusChance:.1},
+  "ほのおのキバ":{type:"ほのお",category:"物理",power:65,pp:15,status:"やけど",statusChance:.1},
+  "みずでっぽう":{type:"みず",category:"特殊",power:40,pp:25},
+  "みずのはどう":{type:"みず",category:"特殊",power:60,pp:20},
+  "でんきショック":{type:"でんき",category:"特殊",power:40,pp:30,status:"まひ",statusChance:.1},
+  "スパーク":{type:"でんき",category:"物理",power:65,pp:20,status:"まひ",statusChance:.15},
+  "こなゆき":{type:"こおり",category:"特殊",power:40,pp:25,status:"こおり",statusChance:.1},
+  "こおりのキバ":{type:"こおり",category:"物理",power:65,pp:15,status:"こおり",statusChance:.1},
+  "かぜおこし":{type:"ひこう",category:"特殊",power:40,pp:35},
+  "つばさでうつ":{type:"ひこう",category:"物理",power:60,pp:35},
+  "どろかけ":{type:"じめん",category:"特殊",power:35,pp:10,stat:"acc",stages:-1},
+  "じならし":{type:"じめん",category:"物理",power:60,pp:20,stat:"spe",stages:-1},
+  "いわおとし":{type:"いわ",category:"物理",power:50,pp:15},
+  "うちおとす":{type:"いわ",category:"物理",power:50,pp:15},
+  "どくばり":{type:"どく",category:"物理",power:30,pp:35,status:"どく",statusChance:.3},
+  "ベノムショック":{type:"どく",category:"特殊",power:65,pp:10},
+  "むしくい":{type:"むし",category:"物理",power:60,pp:20},
+  "むしのていこう":{type:"むし",category:"特殊",power:50,pp:20,stat:"spa",stages:-1},
+  "かみつく":{type:"あく",category:"物理",power:60,pp:25},
+  "だましうち":{type:"あく",category:"物理",power:60,pp:20},
+  "したでなめる":{type:"ゴースト",category:"物理",power:30,pp:30,status:"まひ",statusChance:.3},
+  "シャドーパンチ":{type:"ゴースト",category:"物理",power:60,pp:20},
+  "ねんりき":{type:"エスパー",category:"特殊",power:50,pp:25},
+  "サイケこうせん":{type:"エスパー",category:"特殊",power:65,pp:20},
+  "からてチョップ":{type:"かくとう",category:"物理",power:50,pp:25,highCrit:true},
+  "はっけい":{type:"かくとう",category:"物理",power:60,pp:10,status:"まひ",statusChance:.3},
+  "メタルクロー":{type:"はがね",category:"物理",power:50,pp:35,statSelf:"atk",stagesSelf:1,selfChance:.1},
+  "ラスターカノン":{type:"はがね",category:"特殊",power:80,pp:10},
+  "ようせいのかぜ":{type:"フェアリー",category:"特殊",power:40,pp:30},
+  "ドレインキッス":{type:"フェアリー",category:"特殊",power:50,pp:10,drain:.75},
+  "りゅうのいぶき":{type:"ドラゴン",category:"特殊",power:60,pp:20,status:"まひ",statusChance:.3},
+  "ドラゴンクロー":{type:"ドラゴン",category:"物理",power:80,pp:15},
+
+  "でんじは":{type:"でんき",category:"変化",power:0,pp:20,accuracy:.90,status:"まひ",statusChance:1},
+  "つるぎのまい":{type:"ノーマル",category:"変化",power:0,pp:20,statSelf:"atk",stagesSelf:2},
+  "まもる":{type:"ノーマル",category:"変化",power:0,pp:10,priority:4,protect:true},
+  "ステルスロック":{type:"いわ",category:"変化",power:0,pp:20,hazard:"stealthRock"},
+  "トリックルーム":{type:"エスパー",category:"変化",power:0,pp:5,priority:-7,trickRoom:true}
 };
 
 const ABILITIES = {
@@ -3600,7 +3811,7 @@ const SPECIES = {
   "スノーバー":{types:["くさ","こおり"],baseHp:22,atk:8,moves:["こなゆき","つるのムチ","こおりのキバ","メガドレイン"]},
   "クマシュン":{types:["こおり"],baseHp:21,atk:8,moves:["こなゆき","ひっかく","こおりのキバ","かみつく"]},
   "タマザラシ":{types:["こおり","みず"],baseHp:23,atk:7,moves:["こなゆき","みずでっぽう","みずのはどう","こおりのキバ"]},
-  "ノズパス":{types:["いわ"],baseHp:24,atk:8,moves:["いわおとし","たいあたり","でんきショック","うちおとす"]},
+  "ノズパス":{types:["いわ"],baseHp:24,atk:8,moves:["いわおとし","たいあたり","ステルスロック","でんじは"]},
   "プテラ":{types:["いわ","ひこう"],baseHp:24,atk:11,moves:["いわおとし","つばさでうつ","かみつく","うちおとす"]},
   "チルタリス":{types:["ドラゴン","ひこう"],baseHp:25,atk:10,moves:["りゅうのいぶき","つばさでうつ","ドラゴンクロー","ようせいのかぜ"]},
   "ドオー":{types:["どく","じめん"],baseHp:30,atk:9,moves:["どくばり","じならし","ベノムショック","どろかけ"]},
@@ -3610,8 +3821,8 @@ const SPECIES = {
   "ランターン":{types:["みず","でんき"],baseHp:30,atk:9,spe:6,ability:"ちょすい",held:"たべのこし",moves:["みずのはどう","スパーク","でんきショック","みずでっぽう"]},
   "カマスジョー":{types:["みず"],baseHp:23,atk:12,moves:["みずのはどう","かみつく","たいあたり","みずでっぽう"]},
   "イルカマン":{types:["みず"],baseHp:30,atk:13,moves:["みずのはどう","たいあたり","かみつく","みずでっぽう"]},
-  "トリデプス":{types:["いわ","はがね"],baseHp:32,atk:9,moves:["いわおとし","メタルクロー","うちおとす","たいあたり"]},
-  "ドータクン":{types:["はがね","エスパー"],baseHp:29,atk:10,spe:4,ability:"ふゆう",held:"たべのこし",moves:["ねんりき","メタルクロー","サイケこうせん","ラスターカノン"]},
+  "トリデプス":{types:["いわ","はがね"],baseHp:32,atk:9,moves:["いわおとし","メタルクロー","ステルスロック","まもる"]},
+  "ドータクン":{types:["はがね","エスパー"],baseHp:29,atk:10,spe:4,ability:"ふゆう",held:"たべのこし",moves:["ねんりき","サイケこうせん","トリックルーム","ステルスロック"]},
   "デカヌチャン":{types:["フェアリー","はがね"],baseHp:27,atk:12,moves:["メタルクロー","ようせいのかぜ","ラスターカノン","ドレインキッス"]},
   "ハッサム":{types:["むし","はがね"],baseHp:27,atk:13,moves:["むしくい","メタルクロー","むしのていこう","ラスターカノン"]},
   "ユキノオー":{types:["くさ","こおり"],baseHp:30,atk:11,moves:["こなゆき","メガドレイン","こおりのキバ","つるのムチ"]},
@@ -3624,7 +3835,7 @@ const SPECIES = {
   "ハラバリー":{types:["でんき"],baseHp:33,atk:11,moves:["スパーク","でんきショック","たいあたり","みずでっぽう"]},
   "ゼラオラ":{types:["でんき"],baseHp:31,atk:15,spe:16,ability:"せいでんき",held:"せんせいのツメ",moves:["スパーク","からてチョップ","かみつく","でんきショック"]},
   "マニューラ":{types:["あく","こおり"],baseHp:26,atk:13,moves:["だましうち","こおりのキバ","かみつく","ひっかく"]},
-  "ギルガルド":{types:["はがね","ゴースト"],baseHp:30,atk:13,moves:["メタルクロー","シャドーパンチ","ラスターカノン","したでなめる"]},
+  "ギルガルド":{types:["はがね","ゴースト"],baseHp:30,atk:13,moves:["メタルクロー","シャドーパンチ","つるぎのまい","まもる"]},
   "バンギラス":{types:["いわ","あく"],baseHp:34,atk:15,moves:["いわおとし","かみつく","だましうち","うちおとす"]},
   "ミロカロス":{types:["みず"],baseHp:34,atk:12,moves:["みずのはどう","みずでっぽう","ドラゴンクロー","たいあたり"]},
   "ボーマンダ":{types:["ドラゴン","ひこう"],baseHp:32,atk:15,moves:["ドラゴンクロー","つばさでうつ","りゅうのいぶき","かみつく"]},
@@ -3653,6 +3864,23 @@ const SPECIES = {
   ,"ピジョン":{types:["ノーマル","ひこう"],baseHp:28,atk:10,spe:11,ability:"いかく",held:"なし",moves:["かぜおこし","つばさでうつ","たいあたり","でんこうせっか"]}
   ,"ピジョット":{types:["ノーマル","ひこう"],baseHp:38,atk:14,spe:15,ability:"いかく",held:"なし",moves:["つばさでうつ","かぜおこし","たいあたり","でんこうせっか"]}
   ,"サンドパン":{types:["じめん"],baseHp:35,atk:14,spe:10,ability:"なし",held:"なし",moves:["じならし","ひっかく","いわおとし","どろかけ"]}
+
+  ,"ドンカラス":{types:["あく","ひこう"],baseHp:32,atk:14,spe:11,ability:"なし",held:"なし",moves:["だましうち","つばさでうつ","かみつく","シャドーパンチ"]}
+  ,"ドラピオン":{types:["どく","あく"],baseHp:34,atk:14,spe:11,ability:"なし",held:"なし",moves:["ベノムショック","だましうち","かみつく","どくばり"]}
+  ,"ヒートロトム":{types:["でんき","ほのお"],baseHp:30,atk:14,spe:13,ability:"ふゆう",held:"なし",moves:["スパーク","ほのおのキバ","でんきショック","ひのこ"]}
+  ,"ポリゴンZ":{types:["ノーマル"],baseHp:31,atk:15,spe:12,ability:"なし",held:"なし",moves:["たいあたり","サイケこうせん","でんきショック","シャドーパンチ"]}
+  ,"シャルメイズ":{types:["ほのお","フェアリー"],baseHp:31,atk:15,spe:15,ability:"なし",held:"たべのこし",moves:["ほのおのキバ","ドレインキッス","ようせいのかぜ","ひのこ"]}
+  ,"ルミナーク":{types:["みず","フェアリー"],baseHp:50,atk:17,spe:15,ability:"プレッシャー",held:"なし",moves:["みずのはどう","ドレインキッス","ようせいのかぜ","りゅうのいぶき"]}
+  ,"ノクザーク":{types:["あく","ゴースト"],baseHp:44,atk:18,spe:18,ability:"プレッシャー",held:"なし",moves:["だましうち","シャドーパンチ","かみつく","したでなめる"]}
+
+
+  ,"カビゴン":{types:["ノーマル"],baseHp:52,atk:15,spe:4,ability:"なし",held:"たべのこし",moves:["たいあたり","かみつく","まもる","じならし"]}
+  ,"ケンタロス":{types:["ノーマル"],baseHp:32,atk:15,spe:15,ability:"いかく",held:"なし",moves:["たいあたり","じならし","いわおとし","でんこうせっか"]}
+  ,"カイリュー":{types:["ドラゴン","ひこう"],baseHp:38,atk:16,spe:11,ability:"なし",held:"オレンのみ",moves:["ドラゴンクロー","りゅうのいぶき","つばさでうつ","まもる"]}
+  ,"ミミッキュ":{types:["ゴースト","フェアリー"],baseHp:26,atk:14,spe:13,ability:"なし",held:"なし",moves:["シャドーパンチ","ドレインキッス","つるぎのまい","したでなめる"]}
+  ,"カイリキー":{types:["かくとう"],baseHp:38,atk:17,spe:7,ability:"なし",held:"なし",moves:["からてチョップ","はっけい","いわおとし","つるぎのまい"]}
+  ,"エルレイド":{types:["エスパー","かくとう"],baseHp:31,atk:16,spe:12,ability:"なし",held:"なし",moves:["サイケこうせん","はっけい","つるぎのまい","まもる"]}
+
 };
 
 
@@ -3700,6 +3928,19 @@ const DEX_ORDER = [
   "トリデプス","ドータクン","デカヌチャン","ハッサム","ユキノオー","マンムー","モスノウ","ユキメノコ",
   "タイカイデン","ジバコイル","シビルドン","ハラバリー","ゼラオラ","マニューラ","ギルガルド","バンギラス","ミロカロス","ボーマンダ",
   "ガチグマ(アカツキ)","ドラパルト","サニゴーン","ルカリオ","ガブリアス","ウォッシュロトム","アーマーガア","ウルガモス","ニンフィア","フロスティア"
+,"ドンカラス"
+,"ドラピオン"
+,"ヒートロトム"
+,"ポリゴンZ"
+,"シャルメイズ"
+,"ルミナーク"
+,"ノクザーク"
+,"カビゴン"
+,"ケンタロス"
+,"カイリュー"
+,"ミミッキュ"
+,"カイリキー"
+,"エルレイド"
 ];
 
 const WILD_TABLES = {
@@ -3713,6 +3954,9 @@ const WILD_TABLES = {
   route8:["ロゼリア","メリープ","ムックル"],
   route9:["キャモメ","ウパー","ムックル"],
   route10:["デルビル","イシツブテ"],
+  route11:["キャモメ","ロゼリア","ウパー"],
+  route12:["メリープ","サンド","ロゼリア"],
+  route13:["キャモメ","ウパー","タマザラシ"],
   route15:["スノーバー","クマシュン","ニューラ"],
   route16:["スノーバー","クマシュン","タマザラシ","ニューラ"],
   route18:["スノーバー","クマシュン","ニューラ"]
@@ -3745,12 +3989,12 @@ const TRAINERS = {
   rival3:{name:"ガチライバル",team:[["マニューラ",44],["ギルガルド",44],["ミロカロス",45],["バンギラス",46]],reward:2600},
   rivalFinal:{name:"ガチライバル",team:[["マニューラ",56],["ギルガルド",56],["バンギラス",57],["ミロカロス",57],["ボーマンダ",58]],reward:5000},
   friend2:{name:"親友",team:[["ムックル",10],["メリープ",10]],reward:500},
-  friend3:{name:"親友",team:[["ムックル",30],["メリープ",30],["ウパー",31]],reward:1500,double:true,ally:[["ムックル",29]]},
-  friendFinal:{name:"親友",team:[["ムックル",50],["メリープ",50],["ウパー",51],["ルカリオ",52]],reward:3000},
-  elite1:{name:"四天王 マサト",team:[["ガチグマ(アカツキ)",58]],reward:7000},
-  elite2:{name:"四天王 リュカ",team:[["ドラパルト",59]],reward:7000},
-  elite3:{name:"四天王 シノ",team:[["サニゴーン",59]],reward:7000},
-  elite4:{name:"四天王 ゴウ",team:[["ルカリオ",60]],reward:7000},
+  friend3:{name:"親友",team:[["ムクバード",29],["メリープ",29],["ウパー",30]],reward:1500},
+  friendFinal:{name:"親友",team:[["ムクホーク",50],["デンリュウ",50],["ヌオー",51],["ルカリオ",52],["ニンフィア",51]],reward:3000},
+  elite1:{name:"四天王 マサト",team:[["ムクホーク",57],["ケンタロス",57],["ポリゴンZ",58],["カビゴン",58],["ガチグマ(アカツキ)",59]],reward:7000},
+  elite2:{name:"四天王 リュカ",team:[["チルタリス",58],["ボーマンダ",58],["ガブリアス",59],["カイリュー",59],["ドラパルト",60]],reward:7000},
+  elite3:{name:"四天王 シノ",team:[["ユキメノコ",58],["ミミッキュ",58],["ギルガルド",59],["ドラパルト",59],["サニゴーン",60]],reward:7000},
+  elite4:{name:"四天王 ゴウ",team:[["オオニューラ",59],["カイリキー",59],["エルレイド",60],["ガチグマ(アカツキ)",60],["ルカリオ",61]],reward:7000},
   champion:{name:"チャンピオン ハルク",team:[["ガブリアス",61],["ウォッシュロトム",61],["アーマーガア",62],["ウルガモス",62],["ニンフィア",63],["フロスティア",64]],reward:12000}
   ,ruinsBattle:{name:"ミレイ＆ロザ",team:[["スカタンク",38],["ロゼリア",38],["デルビル",39],["ニューラ",39]],reward:2200,double:true,ally:[["ムックル",37]]}
   ,mireiFinal:{name:"ミレイ",team:[["デカヌチャン",47],["ニンフィア",48],["ユキメノコ",48]],reward:3000}
@@ -3793,6 +4037,51 @@ const TRAINERS = {
   ,nagaraGymTrainer1:{name:"ジムトレーナー・タクミ",team:[["イシツブテ",12],["サンド",12]],reward:500}
   ,nagaraGymTrainer2:{name:"ジムトレーナー・ユウナ",team:[["ノズパス",13]],reward:520}
   ,nagaraGymTrainer3:{name:"ジムトレーナー・ゴウ",team:[["イシツブテ",13],["ノズパス",14]],reward:560}
+  ,grunt1:{name:"スプレマ団したっぱ",team:[["デルビル",8],["サンド",8]],reward:350}
+  ,roza1:{name:"ロザ",team:[["デルビル",27],["イシツブテ",27]],reward:1200}
+  ,mirei1:{name:"ミレイ",team:[["ニンフィア",27],["ユキメノコ",27]],reward:1200}
+
+  ,hqGrunts:{name:"スプレマ団したっぱ連戦",team:[["デルビル",45],["スカタンク",45],["ドータクン",46],["ニューラ",46]],reward:2200}
+  ,selmaBattle:{name:"幹部 セルマ",team:[["ドータクン",47],["ニンフィア",48],["ミロカロス",48]],reward:3500}
+  ,valdBattle:{name:"ボス ヴァルド",team:[["ドンカラス",50],["ドラピオン",50],["ミロカロス",51],["ヒートロトム",51],["ポリゴンZ",52],["シャルメイズ",53]],reward:7000}
+  ,legendCalm:{name:"暴走する伝説",team:[["ルミナーク",56],["ノクザーク",56]],reward:0}
+
+  ,route11TrainerA:{name:"サイクリング",team:[["キャモメ",34],["ロゼリア",34]],reward:1200}
+  ,route11TrainerB:{name:"ベテラントレーナー",team:[["ランターン",35],["デルビル",35]],reward:1250}
+  ,route12TrainerA:{name:"レンジャー",team:[["ムクホーク",36],["ヌオー",36]],reward:1300}
+  ,route12TrainerB:{name:"バックパッカー",team:[["サンドパン",37],["デンリュウ",37]],reward:1350}
+  ,route13TrainerA:{name:"つりびと",team:[["ペリッパー",38],["ランターン",38]],reward:1400}
+  ,route13TrainerB:{name:"かいパンやろう",team:[["ミロカロス",39]],reward:1450}
+
+  ,gym2Trainer1:{name:"アズミジムトレーナー",team:[["ムクバード",18],["キャモメ",18]],reward:650}
+  ,gym2Trainer2:{name:"アズミジムトレーナー",team:[["チルタリス",19]],reward:680}
+  ,gym3Trainer1:{name:"センコウジムトレーナー",team:[["サンド",24],["イシツブテ",24]],reward:800}
+  ,gym3Trainer2:{name:"センコウジムトレーナー",team:[["ドオー",25]],reward:820}
+  ,gym4Trainer1:{name:"ツルネジムトレーナー",team:[["ロゼリア",24],["スカタンク",24]],reward:800}
+  ,gym4Trainer2:{name:"ツルネジムトレーナー",team:[["オオニューラ",25]],reward:820}
+  ,gym5Trainer1:{name:"シオナギジムトレーナー",team:[["ペリッパー",31],["ランターン",31]],reward:1000}
+  ,gym5Trainer2:{name:"シオナギジムトレーナー",team:[["カマスジョー",32]],reward:1050}
+  ,gym6Trainer1:{name:"ツバキジムトレーナー",team:[["トリデプス",37],["ドータクン",37]],reward:1200}
+  ,gym6Trainer2:{name:"ツバキジムトレーナー",team:[["デカヌチャン",38]],reward:1250}
+  ,gym7Trainer1:{name:"セツゲツジムトレーナー",team:[["ユキノオー",42],["マンムー",42]],reward:1400}
+  ,gym7Trainer2:{name:"セツゲツジムトレーナー",team:[["モスノウ",43]],reward:1450}
+  ,gym8Trainer1:{name:"ヒカリジムトレーナー",team:[["タイカイデン",48],["ジバコイル",48]],reward:1700}
+  ,gym8Trainer2:{name:"ヒカリジムトレーナー",team:[["ハラバリー",49]],reward:1750}
+
+  ,rematchGanji:{name:"強化ガンジ",team:[["バンギラス",68],["トリデプス",67],["ガチグマ(アカツキ)",68],["ドータクン",67],["プテラ",69],["マンムー",68]],reward:9000,weather:"すなあらし"}
+  ,rematchSuzune:{name:"強化スズネ",team:[["ムクホーク",67],["アーマーガア",67],["チルタリス",68],["ペリッパー",67],["ボーマンダ",69],["タイカイデン",68]],reward:9000,weather:"おいかぜ"}
+  ,rematchGenzou:{name:"強化ゲンゾウ",team:[["ガブリアス",68],["ドオー",67],["ガチグマ(アカツキ)",69],["サンドパン",67],["ヌオー",67],["マンムー",68]],reward:9000,weather:"すなあらし"}
+  ,rematchReika:{name:"強化レイカ",team:[["ロゼリア",67],["ドラピオン",68],["スカタンク",67],["オオニューラ",69],["ユキメノコ",68],["ロゼリア",68]],reward:9000}
+  ,rematchKaito:{name:"強化カイト",team:[["ペリッパー",67],["ランターン",67],["カマスジョー",68],["ウォッシュロトム",68],["ミロカロス",69],["イルカマン",70]],reward:9000,weather:"あめ"}
+  ,rematchTetsuji:{name:"強化テツジ",team:[["トリデプス",67],["ドータクン",67],["デカヌチャン",68],["ジバコイル",68],["ギルガルド",69],["ハッサム",70]],reward:9000}
+  ,rematchSerina:{name:"強化セリナ",team:[["ユキノオー",67],["マンムー",68],["モスノウ",67],["ユキメノコ",69],["フロスティア",70],["ニューラ",68]],reward:9000,weather:"ゆき"}
+  ,rematchRento:{name:"強化レント",team:[["タイカイデン",68],["ジバコイル",68],["シビルドン",69],["ハラバリー",69],["ウォッシュロトム",69],["ゼラオラ",71]],reward:10000,terrain:"エレキフィールド"}
+  ,eliteRematch1:{name:"強化四天王 マサト",team:[["ムクホーク",70],["ケンタロス",70],["ポリゴンZ",71],["カビゴン",71],["ガチグマ(アカツキ)",72],["バンギラス",72]],reward:11000}
+  ,eliteRematch2:{name:"強化四天王 リュカ",team:[["チルタリス",70],["ボーマンダ",71],["ガブリアス",71],["カイリュー",72],["ドラパルト",73],["ノクザーク",72]],reward:11000}
+  ,eliteRematch3:{name:"強化四天王 シノ",team:[["ユキメノコ",70],["ミミッキュ",70],["ギルガルド",71],["ドラパルト",71],["サニゴーン",72],["ノクザーク",72]],reward:11000}
+  ,eliteRematch4:{name:"強化四天王 ゴウ",team:[["オオニューラ",70],["カイリキー",70],["エルレイド",71],["ガチグマ(アカツキ)",71],["ルカリオ",72],["ハッサム",72]],reward:11000}
+  ,hulkRematch:{name:"強化チャンピオン ハルク",team:[["ガブリアス",73],["ウォッシュロトム",73],["アーマーガア",74],["ウルガモス",74],["ニンフィア",75],["フロスティア",76]],reward:16000}
+
 };
 
 const TM_DATA = {
@@ -3820,27 +4109,103 @@ const SHOP_ITEMS = [
   {name:"かみなりのいし",price:3000,minBadges:5}
 ];
 
-function makeMon(name,level=5){
-  const s=SPECIES[name] || {types:["ノーマル"],baseHp:20,atk:7,spe:7,ability:"なし",held:"なし",moves:["たいあたり","ひっかく","かみつく","たいあたり"]};
-  const maxHp=s.baseHp + level*2;
-  const moves=(s.moves||["たいあたり"]).filter(m=>MOVES[m]).slice(0,4);
-  while(moves.length<4) moves.push("たいあたり");
-  const pp={}; moves.forEach(m=>pp[m]=MOVES[m]?.pp||20);
+
+const STAT_OVERRIDES = {
+  "コノレサ":{atk:7,def:8,spa:10,spd:8,spe:8},
+  "モリレサ":{atk:9,def:10,spa:13,spd:10,spe:11},
+  "フォレッサル":{atk:10,def:12,spa:18,spd:12,spe:16},
+  "ヒコラ":{atk:10,def:8,spa:7,spd:7,spe:10},
+  "マグライガ":{atk:14,def:11,spa:8,spd:9,spe:12},
+  "カザンガ":{atk:18,def:15,spa:9,spd:12,spe:13},
+  "ミズカバ":{atk:9,def:11,spa:6,spd:9,spe:5},
+  "カバール":{atk:13,def:14,spa:7,spd:11,spe:6},
+  "ダムガバ":{atk:17,def:18,spa:8,spd:15,spe:6},
+  "ロゼリア":{atk:7,def:7,spa:14,spd:12,spe:11},
+  "チルタリス":{atk:11,def:12,spa:12,spd:14,spe:11},
+  "ドータクン":{atk:10,def:15,spa:11,spd:15,spe:4},
+  "ジバコイル":{atk:9,def:15,spa:17,spd:13,spe:7},
+  "ミロカロス":{atk:8,def:12,spa:16,spd:17,spe:11},
+  "ユキメノコ":{atk:10,def:9,spa:15,spd:9,spe:15},
+  "フロスティア":{atk:8,def:11,spa:19,spd:15,spe:16},
+  "ルミナーク":{atk:15,def:16,spa:18,spd:17,spe:15},
+  "ノクザーク":{atk:18,def:13,spa:18,spd:13,spe:19},
+  "シャルメイズ":{atk:8,def:11,spa:18,spd:11,spe:17}
+};
+function baseCombatStats(name,s){
+  const o=STAT_OVERRIDES[name];
+  if(o) return {...o};
+  const a=s.atk||8, sp=s.spe||Math.max(5,Math.round(a*.8));
   return {
-    name,level,exp:0,types:s.types||["ノーマル"],maxHp,hp:maxHp,
-    atk:s.atk+Math.floor(level/2),spe:(s.spe||7)+Math.floor(level/3),
-    moves,pp,status:null,sleepTurns:0,
-    stages:{atk:0,spe:0,acc:0},
-    ability:s.ability||"なし",held:s.held||"なし",
-    sashUsed:false,berryUsed:false
+    atk:a,
+    def:s.def||Math.max(6,Math.round(a*.90)),
+    spa:s.spa||Math.max(6,Math.round(a*.95)),
+    spd:s.spd||Math.max(6,Math.round(a*.90)),
+    spe:sp
   };
 }
-function expToNext(mon){ return 12 + mon.level*6; }
+function scaledCombatStat(base,level){ return base + Math.floor(level/2); }
+function refreshCombatStats(mon){
+  const s=SPECIES[mon.name]||{atk:8,spe:7};
+  const b=baseCombatStats(mon.name,s);
+  mon.atk=scaledCombatStat(b.atk,mon.level);
+  mon.def=scaledCombatStat(b.def,mon.level);
+  mon.spa=scaledCombatStat(b.spa,mon.level);
+  mon.spd=scaledCombatStat(b.spd,mon.level);
+  mon.spe=scaledCombatStat(b.spe,mon.level);
+}
+
+function movesForLevel(speciesData,level){
+  const all=(speciesData.moves||["たいあたり"]).filter(m=>MOVES[m]);
+  if(!all.length) return ["たいあたり"];
+  // 序盤から高威力技を全部使える問題を防ぐ。
+  // Lv1-9: 2技 / Lv10-19: 3技 / Lv20-: 4技
+  const count=level<10?Math.min(2,all.length):level<20?Math.min(3,all.length):Math.min(4,all.length);
+  return all.slice(0,count);
+}
+function makeMon(name,level=5){
+  const s=SPECIES[name] || {types:["ノーマル"],baseHp:20,atk:7,spe:7,ability:"なし",held:"なし",moves:["たいあたり","ひっかく"]};
+  const maxHp=s.baseHp + level*2;
+  const moves=movesForLevel(s,level);
+  const pp={}; moves.forEach(m=>pp[m]=MOVES[m]?.pp||20);
+  const b=baseCombatStats(name,s);
+  return {
+    name,level,exp:0,types:s.types||["ノーマル"],maxHp,hp:maxHp,
+    atk:scaledCombatStat(b.atk,level),def:scaledCombatStat(b.def,level),
+    spa:scaledCombatStat(b.spa,level),spd:scaledCombatStat(b.spd,level),
+    spe:scaledCombatStat(b.spe,level),
+    moves,pp,status:null,sleepTurns:0,
+    stages:{atk:0,def:0,spa:0,spd:0,spe:0,acc:0},
+    ability:s.ability||"なし",held:s.held||"なし",
+    sashUsed:false,berryUsed:false,protected:false,protectCount:0
+  };
+}
+function expToNext(mon){
+  const lv=mon.level||1;
+  return Math.floor(24 + lv*9 + lv*lv*0.55);
+}
 function activeMon(){ return state.mons[state.activeIndex] || state.mons[0] || null; }
+
+function repairProgressFlags(){
+  state.flags ??= {};
+  if(state.flags.gym3 && state.flags.gym4) state.flags.bothMidGyms=true;
+  if(state.flags.mireiFinal && state.flags.rozaFinal) state.flags.execsFinal=true;
+  if(state.flags.freeGanrai && state.flags.freeEkirei && state.flags.freeDouga) state.flags.freeGuardians=true;
+  if(state.flags.rematchGanji && state.flags.rematchSuzune && state.flags.rematchGenzou && state.flags.rematchReika &&
+     state.flags.rematchKaito && state.flags.rematchTetsuji && state.flags.rematchSerina && state.flags.rematchRento){
+    state.flags.allGymRematches=true;
+  }
+  if(state.flags.trialGanrai && state.flags.trialEkirei && state.flags.trialDouga) state.flags.allGuardianTrials=true;
+  if(state.flags.ridgeSigil && state.flags.tideSigil && state.flags.ancientSigil && state.flags.snowSigil && state.flags.flameSigil){
+    state.flags.allSigils=true;
+  }
+  if(state.flags.elite1 && state.flags.elite2 && state.flags.elite3 && state.flags.elite4) state.flags.leagueStart=true;
+  recountBadges();
+}
+
 function normalizeState(){
   state.money ??= 3000;
   state.bag ??= {};
-  for(const k of ["モンスターボール","キズぐすり","どくけし","まひなおし","いいキズぐすり","すごいキズぐすり","なんでもなおし","スーパーボール","ハイパーボール","たべのこし","きあいのタスキ","せんせいのツメ","ほのおのいし","みずのいし","かみなりのいし"]) state.bag[k] ??= 0;
+  for(const k of ["モンスターボール","スーパーボール","ハイパーボール","ダイブボール","キズぐすり","どくけし","まひなおし","いいキズぐすり","すごいキズぐすり","なんでもなおし","たべのこし","きあいのタスキ","せんせいのツメ","ほのおのいし","みずのいし","かみなりのいし"]) state.bag[k] ??= 0;
   state.mons ??= [];
   state.box ??= [];
   state.dex ??= {seen:{},caught:{}};
@@ -3857,6 +4222,14 @@ function normalizeState(){
     m.status ??= null; m.sleepTurns ??= 0;
     m.stages ??= {atk:0,spe:0,acc:0};
     m.spe ??= 7+Math.floor((m.level||5)/3);
+    if(!m._statsMigrated){
+      refreshCombatStats(m);
+      m._statsMigrated=true;
+    }
+    m.stages ??= {atk:0,def:0,spa:0,spd:0,spe:0,acc:0};
+    for(const k of ["atk","def","spa","spd","spe","acc"]) m.stages[k] ??= 0;
+    m.protected ??= false;
+    m.protectCount ??= 0;
     m.ability ??= "なし"; m.held ??= "なし";
     m.sashUsed ??= false; m.berryUsed ??= false;
     delete m.type; delete m.move;
@@ -3868,23 +4241,85 @@ function normalizeState(){
     m.status ??= null; m.sleepTurns ??= 0;
     m.stages ??= {atk:0,spe:0,acc:0};
     m.spe ??= 7+Math.floor((m.level||5)/3);
+    if(!m._statsMigrated){
+      refreshCombatStats(m);
+      m._statsMigrated=true;
+    }
+    m.stages ??= {atk:0,def:0,spa:0,spd:0,spe:0,acc:0};
+    m.protected ??= false;
     m.ability ??= "なし"; m.held ??= "なし";
   });
   state.activeIndex ??= 0;
   state.battle ??= null;
+  repairProgressFlags();
 }
 function renderHUD(){
   normalizeState();
   const a=activeMon();
   partyEl.textContent = a ? `先頭：${a.name} Lv.${a.level}` : "相棒：未選択";
   moneyChip.textContent = `₽ ${state.money.toLocaleString()}`;
-  ballsChip.textContent = `モンスターボール ×${state.bag["モンスターボール"]||0}`;
+  ballsChip.textContent = `ボール ${["モンスターボール","スーパーボール","ハイパーボール","ダイブボール"].reduce((s,k)=>s+(state.bag[k]||0),0)}個`;
   partyCountChip.textContent = `手持ち ${state.mons.length}/6・BOX ${state.box.length}`;
   expChip.textContent = a ? `EXP ${a.exp}/${expToNext(a)}` : "EXP -";
 }
 
 function registerSeen(name){ normalizeState(); state.dex.seen[name]=true; }
 function registerCaught(name){ normalizeState(); state.dex.seen[name]=true; state.dex.caught[name]=true; }
+
+
+const DEX_FLAVOR = {
+  "コノレサ":"森の木漏れ日を好む小さなポケモン。仲間の気配にとても敏感。",
+  "モリレサ":"森を駆け回り、傷ついた草木を見つけるとそっと世話をする。",
+  "フォレッサル":"深い森の守り手。感情の変化を光の粒として感じ取ると言われる。",
+  "ヒコラ":"体温が上がると背中の模様が赤く輝く。負けず嫌いで活発。",
+  "マグライガ":"火山地帯で鍛えた脚力を持つ。金属質の毛は熱にも強い。",
+  "カザンガ":"溶岩の熱をまとって戦う。頑丈な体で仲間を守る。",
+  "ミズカバ":"川辺で木や石を集め、小さな堰を作る習性がある。",
+  "カバール":"水流を読み、流れを変えて巣を守る。非常に粘り強い。",
+  "ダムガバ":"巨大な堰を築くほどの力を持つ。水害から集落を守った伝承もある。",
+  "ルミナーク":"信頼や喜びの感情に強く反応する白い伝説のポケモン。",
+  "ノクザーク":"疑念や怒りを敏感に感じ取る黒い伝説のポケモン。",
+  "フロスティア":"氷の結晶を冠のようにまとい、静かな夜にだけ姿を見せるという。"
+};
+function habitatsForSpecies(name){
+  const found=[];
+  Object.entries(WILD_TABLES).forEach(([mapId,list])=>{
+    if((list||[]).includes(name) && maps[mapId]) found.push(maps[mapId].name);
+  });
+  return found.length?found.join(" / "):"野生での生息地は未確認";
+}
+function evolutionInfo(name){
+  const evo=EVOLUTIONS[name];
+  if(evo) return `Lv.${evo.level}で ${evo.to} に進化`;
+  const prev=Object.entries(EVOLUTIONS).find(([,v])=>v.to===name);
+  if(prev) return `${prev[0]} から進化 / この先の進化は現在未確認`;
+  return "進化情報なし";
+}
+function dexDescription(name){
+  if(DEX_FLAVOR[name]) return DEX_FLAVOR[name];
+  const s=SPECIES[name];
+  const types=(s?.types||["不明"]).join("・");
+  return `${types}タイプのポケモン。アルシア地方の各地でトレーナーとの旅や生態調査が進められている。`;
+}
+function openDexDetail(name){
+  const s=SPECIES[name];
+  const seen=!!state.dex.seen[name], caught=!!state.dex.caught[name];
+  if(!seen){ say("図鑑","まだ見つけていないポケモンです。"); return; }
+  const no=Math.max(1,DEX_ORDER.indexOf(name)+1);
+  $("dexDetailContent").innerHTML=`
+    <div class="dexDetailHero">
+      <h3>No.${String(no).padStart(3,"0")} ${name}</h3>
+      <div>${(s?.types||["不明"]).map(t=>`<span class="typeTag">${t}</span>`).join("")}</div>
+      <p>${dexDescription(name)}</p>
+    </div>
+    <div class="dexMeta">
+      <div class="detailBox"><b>登録状況</b><br>${caught?"● 捕獲済み":"○ 発見済み"}</div>
+      <div class="detailBox"><b>生息地</b><br>${habitatsForSpecies(name)}</div>
+      <div class="detailBox"><b>進化</b><br>${evolutionInfo(name)}</div>
+      <div class="detailBox"><b>主な技</b><br>${(s?.moves||[]).join(" / ")||"不明"}</div>
+    </div>`;
+  dexDetailModal.classList.remove("hidden");
+}
 
 function renderDex(){
   normalizeState();
@@ -3900,8 +4335,14 @@ function renderDex(){
       const s=SPECIES[name]||{types:["?"]};
       mid.innerHTML=`<b>${name}</b><div class="partyMini">${(s.types||["?"]).join("/")}</div>`;
     }else mid.innerHTML=`<b>？？？？？</b><div class="partyMini">未発見</div>`;
-    const caught=document.createElement("div"); caught.className="dexCaught"; caught.textContent=caughtFlag?"● 捕獲":"○";
-    row.append(no,mid,caught); $("dexList").appendChild(row);
+    const right=document.createElement("div");
+    const status=document.createElement("div");status.className="dexCaught";status.textContent=caughtFlag?"● 捕獲":"○";
+    right.appendChild(status);
+    if(seenFlag){
+      const btn=document.createElement("button");btn.className="sysBtn";btn.style.padding="6px 9px";btn.textContent="詳細";
+      btn.onclick=()=>openDexDetail(name);right.appendChild(btn);
+    }
+    row.append(no,mid,right); $("dexList").appendChild(row);
   });
 }
 function renderBox(){
@@ -3966,9 +4407,9 @@ function evolveMon(mon,logs=[]){
     const hpRatio=mon.maxHp?mon.hp/mon.maxHp:1;
     mon.name=newName; mon.types=s.types; mon.ability=s.ability||mon.ability; mon.held=mon.held||s.held||"なし";
     mon.maxHp=s.baseHp+mon.level*2; mon.hp=Math.max(1,Math.round(mon.maxHp*hpRatio));
-    mon.atk=s.atk+Math.floor(mon.level/2); mon.spe=(s.spe||7)+Math.floor(mon.level/3);
-    logs.push(`${oldName}のようすが……！ ${newName}に進化した！`);
-    registerSeen(newName); registerCaught(newName);
+    refreshCombatStats(mon);
+    showEventBanner(`${oldName} → ${newName}`,900); logs.push(`${oldName}のようすが……！ ${newName}に進化した！`);
+    registerSeen(newName); registerCaught(newName); autosave("evolution");
     evo=EVOLUTIONS[mon.name];
   }
 }
@@ -4052,6 +4493,58 @@ function useTM(tm){
     partyModal.classList.add("hidden"); renderBag(); renderParty();
   },`${data.move}を覚えさせるポケモンを選択`);
 }
+
+function relearnableMoves(mon){
+  const set=new Set();
+  (SPECIES[mon.name]?.moves||[]).forEach(x=>{if(MOVES[x])set.add(x);});
+  (LEVEL_MOVES[mon.name]||[]).forEach(([lv,mv])=>{if(lv<=mon.level && MOVES[mv])set.add(mv);});
+  return [...set];
+}
+function setMonMove(mon,slot,newMove){
+  const old=mon.moves[slot];
+  mon.moves[slot]=newMove;
+  if(old!==newMove) delete mon.pp[old];
+  mon.pp[newMove]=MOVES[newMove]?.pp||20;
+  autosave("move");
+}
+function openMoveTutor(monIndex){
+  const mon=state.mons[monIndex]; if(!mon)return;
+  const pool=relearnableMoves(mon).filter(m=>!mon.moves.includes(m));
+  $("moveTutorContent").innerHTML=`<div class="notice">${mon.name} Lv.${mon.level}<br>思い出せる技を選んでください。</div>`;
+  if(!pool.length){
+    $("moveTutorContent").innerHTML+=`<div class="detailBox">今思い出せる未習得の技はありません。</div>`;
+  }else{
+    pool.forEach(move=>{
+      const mv=MOVES[move];
+      const row=document.createElement("div");row.className="moveTutorMove";
+      row.innerHTML=`<span><b>${move}</b><div class="partyMini">${mv.type}・${mv.category||"物理"} / ${mv.category==="変化"?"変化技":`威力${mv.power}`}</div></span>`;
+      const btn=document.createElement("button");btn.className="sysBtn";btn.textContent="覚える";
+      btn.onclick=()=>chooseMoveForget(monIndex,move);
+      row.appendChild(btn);$("moveTutorContent").appendChild(row);
+    });
+  }
+  moveTutorModal.classList.remove("hidden");
+}
+function chooseMoveForget(monIndex,newMove){
+  const mon=state.mons[monIndex];if(!mon)return;
+  if(mon.moves.length<4){
+    mon.moves.push(newMove);mon.pp[newMove]=MOVES[newMove]?.pp||20;
+    autosave("move");openMoveTutor(monIndex);renderDetails();return;
+  }
+  $("moveTutorContent").innerHTML=`<div class="notice">${newMove}を覚えるため、忘れさせる技を選んでください。</div>`;
+  mon.moves.forEach((old,slot)=>{
+    const row=document.createElement("div");row.className="moveTutorMove";
+    row.innerHTML=`<span><b>${old}</b><div class="partyMini">${MOVES[old]?.type||"?"}・${MOVES[old]?.category||"?"}</div></span>`;
+    const btn=document.createElement("button");btn.className="sysBtn";btn.textContent="忘れる";
+    btn.onclick=()=>{
+      setMonMove(mon,slot,newMove);
+      say("技思い出し",`${mon.name}は${old}を忘れて${newMove}を覚えた！`);
+      openMoveTutor(monIndex);renderDetails();
+    };
+    row.appendChild(btn);$("moveTutorContent").appendChild(row);
+  });
+}
+
 function renderDetails(){
   $("detailList").innerHTML="";
   state.mons.forEach((m,i)=>{
@@ -4065,14 +4558,18 @@ function renderDetails(){
         <div>タイプ<br><b>${m.types.join("/")}</b></div>
         <div>経験値<br><b>${m.exp}/${expToNext(m)}</b></div>
         <div>HP<br><b>${m.hp}/${m.maxHp}</b></div>
-        <div>攻撃 / 素早さ<br><b>${m.atk} / ${m.spe}</b></div>
+        <div>攻撃 / 防御<br><b>${m.atk} / ${m.def}</b></div>
+        <div>特攻 / 特防<br><b>${m.spa} / ${m.spd}</b></div>
+        <div>素早さ<br><b>${m.spe}</b></div>
         <div>特性<br><b>${m.ability}</b><div class="partyMini">${ABILITIES[m.ability]?.desc||""}</div></div>
         <div>持ち物<br><b>${m.held}</b><div class="partyMini">${HELD_ITEMS[m.held]?.desc||""}</div></div>
       </div>
       <h4>技</h4>
-      <div class="partyMini">${m.moves.map(x=>`${x}（${MOVES[x]?.type||"?"} / PP${m.pp[x]??0}/${MOVES[x]?.pp||20}）`).join("<br>")}</div>
+      <div class="partyMini">${m.moves.map(x=>`${x}（${MOVES[x]?.type||"?"}・${MOVES[x]?.category||"?"} / ${MOVES[x]?.category==="変化"?"変化":`威力${MOVES[x]?.power||0}`} / PP${m.pp[x]??0}/${MOVES[x]?.pp||20}）`).join("<br>")}</div>
     `;
-    box.appendChild(heldBtn);$("detailList").appendChild(box);
+    const tutorBtn=document.createElement("button");tutorBtn.className="sysBtn";tutorBtn.textContent="技を思い出す";
+    tutorBtn.onclick=()=>openMoveTutor(i);
+    box.appendChild(heldBtn);box.appendChild(tutorBtn);$("detailList").appendChild(box);
   });
 }
 
@@ -4167,18 +4664,17 @@ function stageMultiplier(stage){
   stage=Math.max(-6,Math.min(6,stage||0));
   return stage>=0 ? (2+stage)/2 : 2/(2-stage);
 }
-function effectiveAtk(mon){
-  let a=mon.atk*stageMultiplier(mon.stages?.atk||0);
-  if(mon.status==="やけど") a*=0.5;
-  return a;
+function effectiveStat(mon,key){
+  let v=(mon[key]||1)*stageMultiplier(mon.stages?.[key]||0);
+  if(key==="atk" && mon.status==="やけど") v*=0.5;
+  if(key==="spe" && mon.status==="まひ") v*=0.5;
+  return Math.max(1,v);
 }
-function effectiveSpe(mon){
-  let s=mon.spe*stageMultiplier(mon.stages?.spe||0);
-  if(mon.status==="まひ") s*=0.5;
-  return s;
-}
-function moveAccuracy(mon){
-  return Math.max(.35,Math.min(1.2,stageMultiplier(mon.stages?.acc||0)));
+function effectiveAtk(mon){ return effectiveStat(mon,"atk"); }
+function effectiveSpe(mon){ return effectiveStat(mon,"spe"); }
+function moveAccuracy(mon,mv=null){
+  const stage=stageMultiplier(mon.stages?.acc||0);
+  return Math.max(.20,Math.min(1,(mv?.accuracy??1)*stage));
 }
 function effectivenessText(mult){
   if(mult===0) return "効果がないようだ…";
@@ -4196,12 +4692,17 @@ function abilityPowerBoost(attacker,move){
 }
 function calcDamage(attacker,defender,moveName){
   const mv=MOVES[moveName] || MOVES["たいあたり"];
+  if(mv.category==="変化" || !mv.power) return {damage:0,eff:1,move:mv,crit:false};
   const stab=(attacker.types||[]).includes(mv.type)?1.5:1;
   const eff=typeMultiplier(mv.type,defender.types||["ノーマル"],defender);
-  const levelFactor=0.65 + attacker.level/100;
   const critChance=mv.highCrit?.125:.0625;
   const crit=Math.random()<critChance ? 1.5 : 1;
-  const raw=Math.floor((mv.power/10 + effectiveAtk(attacker)*0.65) * levelFactor * stab * eff * crit * abilityPowerBoost(attacker,mv) * environmentPowerMod(mv.type,attacker) * (0.9+Math.random()*0.2));
+  const attackKey=mv.category==="特殊"?"spa":"atk";
+  const defenseKey=mv.category==="特殊"?"spd":"def";
+  const A=effectiveStat(attacker,attackKey);
+  const D=effectiveStat(defender,defenseKey);
+  const base=Math.floor((((2*attacker.level/5+2)*mv.power*A/Math.max(1,D))/50)+2);
+  const raw=Math.floor(base*stab*eff*crit*abilityPowerBoost(attacker,mv)*environmentPowerMod(mv.type,attacker)*(0.9+Math.random()*0.2));
   return {damage:eff===0?0:Math.max(1,raw),eff,move:mv,crit:crit>1};
 }
 function healthyIndex(startAt=0){
@@ -4219,8 +4720,8 @@ function applyEntryAbility(mon,opponent,logParts){
   }
 }
 function resetBattleMon(mon){
-  mon.stages={atk:0,spe:0,acc:0};
-  mon.sashUsed=false;
+  mon.stages={atk:0,def:0,spa:0,spd:0,spe:0,acc:0};
+  mon.sashUsed=false; mon.protected=false; mon.protectCount=0;
 }
 function applyHeldAuto(mon,logParts){
   if(!mon)return;
@@ -4250,14 +4751,17 @@ function maybeApplyStatus(target,mv,logParts){
   if(mv.status==="ねむり") target.sleepTurns=2+Math.floor(Math.random()*2);
   logParts.push(`${target.name}は${mv.status}状態になった！`);
 }
+function statLabel(k){
+  return {atk:"攻撃",def:"防御",spa:"特攻",spd:"特防",spe:"素早さ",acc:"命中"}[k]||k;
+}
 function applyStatEffects(user,target,mv,logParts){
   if(mv.stat && mv.stages){
     target.stages[mv.stat]=Math.max(-6,Math.min(6,(target.stages[mv.stat]||0)+mv.stages));
-    logParts.push(`${target.name}の${mv.stat==="atk"?"攻撃":mv.stat==="spe"?"素早さ":"命中"}が下がった。`);
+    logParts.push(`${target.name}の${statLabel(mv.stat)}が${mv.stages>0?"上がった":"下がった"}。`);
   }
   if(mv.statSelf && mv.stagesSelf && Math.random()<=(mv.selfChance||1)){
     user.stages[mv.statSelf]=Math.max(-6,Math.min(6,(user.stages[mv.statSelf]||0)+mv.stagesSelf));
-    logParts.push(`${user.name}の攻撃が上がった。`);
+    logParts.push(`${user.name}の${statLabel(mv.statSelf)}が${Math.abs(mv.stagesSelf)>=2?"ぐーんと ":""}上がった。`);
   }
 }
 function canAct(mon,logParts){
@@ -4279,22 +4783,42 @@ function hasPP(mon){ return (mon.moves||[]).some(m=>(mon.pp[m]??0)>0); }
 function struggle(mon){
   return {name:"わるあがき",type:"ノーマル",power:50,pp:999,recoil:.25};
 }
+
+
+function moveScoreAI(mon,player,name){
+  const mv=MOVES[name]; if(!mv) return -999;
+  if(!mv.protect) user.protectCount=0;
+  if(mv.category==="変化"){
+    if(mv.protect) return (mon.protectCount||0)>0 ? 3 : (mon.hp<mon.maxHp*.35 ? 34 : 7);
+    if(mv.trickRoom) return state.battle?.trickRoomTurns?2:(effectiveSpe(mon)<effectiveSpe(player)?48:10);
+    if(mv.hazard) return state.battle?.playerHazards?.stealthRock?2:34;
+    if(mv.status && !player.status) return 42;
+    if(mv.statSelf==="atk" && (mon.stages?.atk||0)<2) return 36;
+    return 10;
+  }
+  const eff=typeMultiplier(mv.type,player.types,player);
+  const atk=mv.category==="特殊"?effectiveStat(mon,"spa"):effectiveStat(mon,"atk");
+  const def=mv.category==="特殊"?effectiveStat(player,"spd"):effectiveStat(player,"def");
+  let score=(mv.power||0)*eff*(atk/Math.max(1,def));
+  if(eff>=2) score+=30;
+  if(mv.status && !player.status) score+=10;
+  if(mv.drain && mon.hp<mon.maxHp*.6) score+=12;
+  return score;
+}
 function chooseEnemyMove(mon,player){
   let candidates=(mon.moves||[]).filter(n=>(mon.pp[n]??0)>0 && MOVES[n]);
   if(!candidates.length) return "わるあがき";
-  candidates.sort((a,b)=>{
-    const ma=MOVES[a],mb=MOVES[b];
-    const sa=ma.power*typeMultiplier(ma.type,player.types,player) + (ma.status && !player.status?15:0);
-    const sb=mb.power*typeMultiplier(mb.type,player.types,player) + (mb.status && !player.status?15:0);
-    return sb-sa;
-  });
-  if(Math.random()<.75) return candidates[0];
-  return candidates[Math.floor(Math.random()*candidates.length)];
+  candidates.sort((a,b)=>moveScoreAI(mon,player,b)-moveScoreAI(mon,player,a));
+  if(Math.random()<.88) return candidates[0];
+  return candidates[Math.floor(Math.random()*Math.min(2,candidates.length))];
 }
+
 function priorityRoll(mon,moveName=null){
   const movePriority=moveName && MOVES[moveName] ? (MOVES[moveName].priority||0)*10000 : 0;
   const claw=mon.held==="せんせいのツメ" && Math.random()<.2 ? 1000 : 0;
-  return movePriority + claw + effectiveSpe(mon)*weatherSpeedMod(mon);
+  const sp=effectiveSpe(mon)*weatherSpeedMod(mon);
+  const trick=state.battle?.trickRoomTurns>0 ? (1000-sp) : sp;
+  return movePriority + claw + trick;
 }
 
 function recountBadges(){
@@ -4340,8 +4864,47 @@ function completeTrainerProgress(flag){
     badgeCutscene(8,"レント","ボルトバッジ");
   }else if(flag==="mireiFinal" || flag==="rozaFinal"){
     if(state.flags.mireiFinal && state.flags.rozaFinal) state.flags.execsFinal=true;
+  }else if(["rematchGanji","rematchSuzune","rematchGenzou","rematchReika","rematchKaito","rematchTetsuji","rematchSerina","rematchRento"].includes(flag)){
+    updateAllGymRematches();
   }
+  repairProgressFlags(); autosave("progress");
   renderHUD();
+}
+
+
+function friendStarterAgainst(playerStarter){
+  // 親友は主人公にタイプ相性で不利な御三家を選ぶ
+  if(playerStarter==="コノレサ") return "ミズカバ"; // みず→くさに不利
+  if(playerStarter==="ヒコラ") return "コノレサ";   // くさ→ほのおに不利
+  return "ヒコラ";                                  // ほのお→みずに不利
+}
+function rivalStarterAgainst(playerStarter){
+  // ガチライバルは主人公にタイプ相性で有利な御三家を選ぶ
+  if(playerStarter==="コノレサ") return "ヒコラ";   // ほのお→くさに有利
+  if(playerStarter==="ヒコラ") return "ミズカバ";   // みず→ほのおに有利
+  return "コノレサ";                                // くさ→みずに有利
+}
+function evolvedStarter(baseName,level){
+  if(baseName==="コノレサ") return level>=36?"フォレッサル":level>=16?"モリレサ":"コノレサ";
+  if(baseName==="ヒコラ") return level>=36?"カザンガ":level>=16?"マグライガ":"ヒコラ";
+  if(baseName==="ミズカバ") return level>=36?"ダムガバ":level>=16?"カバール":"ミズカバ";
+  return baseName;
+}
+function startFriend1Battle(){
+  if(!state.starter || !state.mons.length){
+    say("親友","まず御三家を選んでこよう！");
+    return;
+  }
+  if(state.flags.friend1){
+    say("親友","最初の勝負、楽しかったね！ ヒカリシティまで一緒に頑張ろう。");
+    return;
+  }
+  const opp=friendStarterAgainst(state.starter);
+  runCutscene("friend1_intro",[
+    {speaker:"親友",text:`君が${state.starter}なら、私は${opp}にするね！`},
+    {speaker:"親友",text:"相性的にはこっちが不利だけど、だからこそ工夫して戦ってみたい！"},
+    {speaker:"親友",text:"最初の一戦、全力でいこう！"}
+  ],()=>startTrainerBattle("friend1",{name:"親友",team:[[opp,5]],reward:300}),true);
 }
 
 function startWildBattle(name){
@@ -4356,12 +4919,48 @@ function startWildBattle(name){
   resetBattleMon(mon); resetBattleMon(enemy);
   const logs=[`野生の${enemy.name}が飛び出してきた！`];
   applyEntryAbility(mon,enemy,logs); applyEntryAbility(enemy,mon,logs);
-  state.battle={kind:"wild",enemy,enemyTeam:[enemy],enemyIndex:0,trainerName:null,reward:0,flag:null,log:logs.join(" ")};
-  battleModal.classList.remove("hidden");
+  state.battle={kind:"wild",enemy,enemyTeam:[enemy],enemyIndex:0,trainerName:null,reward:0,flag:null,trickRoomTurns:0,playerHazards:{},enemyHazards:{},log:logs.join(" ")};
+  sfx("encounter"); battleModal.classList.remove("hidden");
   renderBattle();
   renderHUD();
 }
+
+function storyTrainerDefinition(flag,def){
+  if(!state.starter) return def;
+  const copy={...def,team:(def.team||[]).map(x=>[x[0],x[1]])};
+
+  const fBase=friendStarterAgainst(state.starter);
+  const rBase=rivalStarterAgainst(state.starter);
+
+  if(flag==="friend2"){
+    copy.team=[[evolvedStarter(fBase,10),10],["ムックル",10]];
+  }else if(flag==="friend3"){
+    copy.team=[[evolvedStarter(fBase,30),30],["ムクバード",29],["メリープ",29],["ウパー",30]];
+  }else if(flag==="friendFinal"){
+    copy.team=[
+      [evolvedStarter(fBase,52),52],
+      ["ムクホーク",50],["デンリュウ",50],["ヌオー",51],["ルカリオ",52],["ニンフィア",51]
+    ];
+  }else if(flag==="rival1"){
+    copy.team=[[evolvedStarter(rBase,23),23],["ニューラ",23],["ギルガルド",24]];
+  }else if(flag==="rival2"){
+    copy.team=[[evolvedStarter(rBase,31),31],["ニューラ",31],["ギルガルド",31],["ミロカロス",32]];
+  }else if(flag==="rival3"){
+    copy.team=[
+      [evolvedStarter(rBase,46),46],
+      ["マニューラ",44],["ギルガルド",44],["ミロカロス",45],["バンギラス",46]
+    ];
+  }else if(flag==="rivalFinal"){
+    copy.team=[
+      [evolvedStarter(rBase,58),58],
+      ["マニューラ",56],["ギルガルド",56],["バンギラス",57],["ミロカロス",57],["ボーマンダ",58]
+    ];
+  }
+  return copy;
+}
+
 function startTrainerBattle(flag,def){
+  def=storyTrainerDefinition(flag,def);
   let idx=healthyIndex(state.activeIndex);
   if(idx<0){ say("ガイド","戦えるポケモンがいない。ポケモンセンターで回復しよう。"); return; }
   state.activeIndex=idx;
@@ -4379,8 +4978,8 @@ function startTrainerBattle(flag,def){
   applyEntryAbility(state.mons[idx],team[0],logs); applyEntryAbility(team[0],state.mons[idx],logs);
   const allyTeam=(def.ally||[]).map(([name,lv])=>makeMon(name,lv));
   const isDouble=!!def.double && team.length>=2;
-  state.battle={kind:"trainer",double:isDouble,allyTeam,ally:allyTeam[0]||null,enemyTeam:team,enemyIndex:0,enemy:team[0],enemy2:isDouble?team[1]:null,trainerName:def.name,reward:def.reward||0,flag,log:logs.join(" ")};
-  battleModal.classList.remove("hidden");
+  state.battle={kind:"trainer",double:isDouble,allyTeam,ally:allyTeam[0]||null,enemyTeam:team,enemyIndex:0,enemy:team[0],enemy2:isDouble?team[1]:null,trainerName:def.name,reward:def.reward||0,flag,trickRoomTurns:0,playerHazards:{},enemyHazards:{},log:logs.join(" ")};
+  sfx("encounter"); battleModal.classList.remove("hidden");
   renderBattle();
 }
 function renderMoveButtons(){
@@ -4391,7 +4990,7 @@ function renderMoveButtons(){
     const mv=name==="わるあがき"?struggle(p):(MOVES[name]||MOVES["たいあたり"]);
     const btn=document.createElement("button"); btn.className="sysBtn moveBtn";
     const pp=name==="わるあがき"?"∞":`${p.pp[name]??0}/${mv.pp}`;
-    btn.innerHTML=`${name}<small>${mv.type} / 威力 ${mv.power} / PP ${pp}</small>`;
+    btn.innerHTML=`${name}<small>${mv.type}・${mv.category||"物理"} / ${mv.category==="変化"?"変化技":`威力 ${mv.power}`} / PP ${pp}</small>`;
     if(name!=="わるあがき" && (p.pp[name]??0)<=0) btn.disabled=true;
     btn.onclick=()=>playerUseMove(name);
     area.appendChild(btn);
@@ -4419,16 +5018,76 @@ function renderBattle(){
   renderMoveButtons();
   renderHUD();
 }
-function chooseEnemyMove(mon){
-  const valid=(mon.moves||["たいあたり"]).filter(n=>MOVES[n]);
-  return valid[Math.floor(Math.random()*valid.length)] || "たいあたり";
+
+
+function battleSide(mon){
+  const b=state.battle;
+  if(!b) return "enemy";
+  if(state.mons.includes(mon) || b.ally===mon) return "player";
+  return "enemy";
 }
+function hazardKeyForTarget(target){
+  return battleSide(target)==="player"?"playerHazards":"enemyHazards";
+}
+function applyEntryHazards(mon,side,logs){
+  const b=state.battle;if(!b||!mon||mon.hp<=0)return;
+  const key=side==="player"?"playerHazards":"enemyHazards";
+  if(b[key]?.stealthRock){
+    const mult=typeMultiplier("いわ",mon.types||["ノーマル"],mon);
+    const d=Math.max(1,Math.floor(mon.maxHp*0.125*mult));
+    mon.hp=Math.max(0,mon.hp-d);
+    logs.push(`${mon.name}にステルスロックが突き刺さった！ ${d}ダメージ。`);
+  }
+}
+function executeStatusMove(user,target,moveName,mv,logParts){
+  if(mv.protect){
+    const chance=1/Math.pow(3,user.protectCount||0);
+    if(Math.random()<=chance){
+      user.protected=true;
+      user.protectCount=(user.protectCount||0)+1;
+      logParts.push(`${user.name}はまもるの体勢に入った！`);
+    }else{
+      user.protectCount=0;
+      logParts.push(`${user.name}のまもるは失敗した！`);
+    }
+    return true;
+  }
+  if(mv.status && mv.type==="でんき" && typeMultiplier("でんき",target.types||["ノーマル"],target)===0){
+    logParts.push(`${user.name}の${moveName}！ しかし${target.name}には効果がない！`);
+    return true;
+  }
+  if(mv.trickRoom){
+    state.battle.trickRoomTurns=5;
+    logParts.push("時空がゆがんだ！ 5ターンの間、遅いポケモンから動く！");
+    return true;
+  }
+  if(mv.hazard==="stealthRock"){
+    const key=hazardKeyForTarget(target);
+    state.battle[key]=state.battle[key]||{};
+    if(state.battle[key].stealthRock) logParts.push("しかし、すでにステルスロックがある！");
+    else { state.battle[key].stealthRock=true; logParts.push(`${target.name}側の場に尖った岩が浮かんだ！`); }
+    return true;
+  }
+  maybeApplyStatus(target,mv,logParts);
+  applyStatEffects(user,target,mv,logParts);
+  logParts.push(`${user.name}の${moveName}！`);
+  return true;
+}
+
 function executeMove(user,target,moveName,logParts,isPlayer){
   const mv=moveName==="わるあがき"?struggle(user):(MOVES[moveName]||MOVES["たいあたり"]);
   if(moveName!=="わるあがき") consumePP(user,moveName,target.ability);
   if(!canAct(user,logParts)) return;
-  if(moveName!=="わるあがき" && Math.random()>moveAccuracy(user)){
+  if(moveName!=="わるあがき" && Math.random()>moveAccuracy(user,mv)){
     logParts.push(`${user.name}の${moveName}！ しかし外れた！`); return;
+  }
+  if(mv.category==="変化"){
+    executeStatusMove(user,target,moveName,mv,logParts);
+    return;
+  }
+  if(target.protected){
+    logParts.push(`${target.name}は攻撃から身を守った！`);
+    return;
   }
   const r=calcDamage(user,target,moveName==="わるあがき"?"たいあたり":moveName);
   let dmg=r.damage;
@@ -4441,7 +5100,7 @@ function executeMove(user,target,moveName,logParts,isPlayer){
   }
   target.hp=Math.max(0,target.hp-dmg);
   logParts.push(`${user.name}の${moveName}！ ${dmg}ダメージ！${r.crit?" 急所に当たった！":""}${effectivenessText(r.eff)?" "+effectivenessText(r.eff):""}`);
-  if(target.ability==="ちょすい" && (MOVES[moveName]?.type==="みず")){
+  if(target.ability==="ちょすい" && mv.type==="みず"){
     const h=Math.max(1,Math.floor(target.maxHp/4)); target.hp=Math.min(target.maxHp,target.hp+h);
     logParts.push(`${target.name}はちょすいでHPを${h}回復！`);
   }
@@ -4460,11 +5119,20 @@ function executeMove(user,target,moveName,logParts,isPlayer){
 function resolveEndOfTurn(){
   const b=state.battle,p=activeMon(); if(!b||!p)return;
   const logs=[];
+  p.protected=false; b.enemy.protected=false;
+  if(b.ally) b.ally.protected=false; if(b.enemy2) b.enemy2.protected=false;
+  if(b.trickRoomTurns>0){
+    b.trickRoomTurns--;
+    if(b.trickRoomTurns===0) logs.push("ゆがんだ時空が元に戻った！");
+  }
   endTurnEffects(p,logs); endTurnEffects(b.enemy,logs);
   if(logs.length) b.log+=" "+logs.join(" ");
   if(p.hp<=0){
     const next=healthyIndex(state.activeIndex+1);
-    if(next>=0){state.activeIndex=next;b.log+=` ${p.name}は倒れた！ ${activeMon().name}を繰り出した！`;renderBattle();}
+    if(next>=0){
+      state.activeIndex=next; const hs=[]; applyEntryHazards(activeMon(),"player",hs);
+      b.log+=` ${p.name}は倒れた！ ${activeMon().name}を繰り出した！ ${hs.join(" ")}`;renderBattle();
+    }
     else {b.log+=" 手持ちが全員倒れた…。";renderBattle();setTimeout(loseBattle,700);}
     return;
   }
@@ -4520,7 +5188,7 @@ function gainExp(mon,amount){
   while(mon.exp>=expToNext(mon)){
     mon.exp-=expToNext(mon);
     mon.level++;
-    mon.maxHp+=2; mon.hp=Math.min(mon.maxHp,mon.hp+2); mon.atk+=1; mon.spe+=1;
+    mon.maxHp+=2; mon.hp=Math.min(mon.maxHp,mon.hp+2); refreshCombatStats(mon);
     levels++;
   }
   const logs=[];
@@ -4528,12 +5196,14 @@ function gainExp(mon,amount){
     processLevelMoves(mon,oldLevel,mon.level,logs);
     evolveMon(mon,logs);
   }
-  mon._levelLogs=logs;
+  if(levels) sfx("level"); mon._levelLogs=logs;
   return levels;
 }
 function onEnemyDefeated(){
   const b=state.battle,p=activeMon(); if(!b||!p)return;
-  const xp=8+b.enemy.level*4;
+  const diff=b.enemy.level-p.level;
+  const levelMod=diff>=3?1.35:diff<=-5?0.45:diff<=-2?0.7:1;
+  const xp=Math.max(4,Math.floor((10+b.enemy.level*4.2)*levelMod));
   const levels=gainExp(p,xp); const levelExtra=(p._levelLogs||[]).join(" "); p._levelLogs=[];
   if(b.double && b.enemy2 && b.enemy2.hp>0 && b.enemyIndex >= b.enemyTeam.length-1){
     b.enemy=b.enemy2; b.enemy2=null;
@@ -4560,8 +5230,9 @@ function onEnemyDefeated(){
     return;
   }
   if(b.kind==="trainer"){
-    state.money+=b.reward;
+    state.money+=Math.floor(b.reward*(b.kind==="trainer"?0.85:1));
     if(b.flag) state.flags[b.flag]=true;
+    autosave("trainer");
     const finishedFlag=b.flag;
     b.log=`${b.trainerName}との勝負に勝った！ ₽${b.reward}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
     setTimeout(()=>completeTrainerProgress(finishedFlag),900);
@@ -4581,6 +5252,23 @@ function onEnemyDefeated(){
           {speaker:"ミレイ",text:"……捕獲は完了したみたい。"},
           {speaker:"親友",text:"まだ終わってない。追いかけよう！"}
         ]);
+      }else if(finishedFlag==="selmaBattle"){
+        runCutscene("selma_after",[
+          {speaker:"セルマ",text:"負けたわ。計画は守護者の暴走エネルギーで果実を強制成長させるもの。"},
+          {speaker:"セルマ",text:"ルミナークとノクザークをユノハナへ誘き寄せ、暴走させるつもりよ。急ぎなさい。"}
+        ]);
+      }else if(finishedFlag==="valdBattle"){
+        runCutscene("vald_after",[
+          {speaker:"ヴァルド",text:"……負けは認める。だが、私の考えまで間違っていたとは思わない。"},
+          {effect:"shake"},
+          {speaker:"語り",text:"その瞬間、海の向こうから二つの巨大な咆哮が響いた！"}
+        ]);
+      }else if(finishedFlag==="legendCalm"){
+        runCutscene("legend_after_battle",[
+          {effect:"flash"},
+          {speaker:"語り",text:"激戦の末、二体の暴走が一瞬だけ収まった。"},
+          {speaker:"語り",text:"だが、心の奥にある悲しみと疑念はまだ消えていない。"}
+        ]);
       }else if(finishedFlag==="champion"){
         leagueVictoryCutscene();
       }
@@ -4597,21 +5285,51 @@ function playerUseMove(moveName){
   if(moveName!=="わるあがき" && (p.pp[moveName]??0)<=0){b.log="PPが足りない！";renderBattle();return;}
   performRound(moveName);
 }
-function throwBall(){
-  const b=state.battle; if(!b) return;
+function ballBonus(name,enemy){
+  if(name==="スーパーボール") return 1.5;
+  if(name==="ハイパーボール") return 2.0;
+  if(name==="ダイブボール" && ["みず","こおり"].some(t=>(enemy.types||[]).includes(t))) return 2.5;
+  return 1.0;
+}
+function statusCatchBonus(enemy){
+  if(["ねむり","こおり"].includes(enemy.status)) return 1.5;
+  if(["まひ","どく","やけど"].includes(enemy.status)) return 1.25;
+  return 1;
+}
+function openBallChooser(){
+  const b=state.battle;if(!b)return;
   if(b.kind==="trainer"){b.log="トレーナーのポケモンは捕まえられない！";renderBattle();return;}
-  if((state.bag["モンスターボール"]||0)<=0){b.log="モンスターボールを持っていない！";renderBattle();return;}
-  state.bag["モンスターボール"]--;
+  const balls=["モンスターボール","スーパーボール","ハイパーボール","ダイブボール"];
+  $("ballList").innerHTML="";
+  let any=false;
+  balls.forEach(name=>{
+    const count=state.bag[name]||0;if(count<=0)return;any=true;
+    const row=document.createElement("div");row.className="itemRow";
+    row.innerHTML=`<span><b>${name}</b><div class="partyMini">×${count}</div></span>`;
+    const btn=document.createElement("button");btn.className="sysBtn";btn.textContent="投げる";
+    btn.onclick=()=>{ballModal.classList.add("hidden");throwSelectedBall(name);};
+    row.appendChild(btn);$("ballList").appendChild(row);
+  });
+  if(!any){$("ballList").innerHTML='<div class="notice">ボールを持っていない。</div>';}
+  ballModal.classList.remove("hidden");
+}
+function throwSelectedBall(ball){
+  const b=state.battle; if(!b) return;
+  if((state.bag[ball]||0)<=0){b.log=`${ball}を持っていない！`;renderBattle();return;}
+  state.bag[ball]--;
   const e=b.enemy, hpFactor=1-(e.hp/e.maxHp);
-  const chance=Math.min(.92,.22+hpFactor*.62);
+  const base=.18+hpFactor*.56;
+  const chance=Math.min(.96,base*ballBonus(ball,e)*statusCatchBonus(e));
   if(Math.random()<chance){
-    b.log=`やった！ ${e.name}を捕まえた！`;
+    showEventBanner(`${e.name} GET!`,800);
+    b.log=`${ball}を投げた！ やった！ ${e.name}を捕まえた！`;
     registerCaught(e.name);
     if(state.mons.length<6) state.mons.push(e);
     else { state.box.push(e); b.log+=` 手持ちがいっぱいなのでボックスへ送った。`; }
+    sfx("catch"); autosave("capture");
     renderBattle(); setTimeout(()=>endBattle(true),700);
   }else{
-    b.log=`だめだ！ ${e.name}がボールから出てきた！`;
+    b.log=`${ball}を投げた！ だめだ！ ${e.name}がボールから出てきた！`;
     renderBattle(); setTimeout(battleEnemyTurn,250);
   }
 }
@@ -4643,6 +5361,7 @@ function openBattleSwitch(){
       state.activeIndex=i; resetBattleMon(activeMon());
       partyModal.classList.add("hidden");
       const logs=[`${activeMon().name}に交代した！`];
+      applyEntryHazards(activeMon(),"player",logs);
       applyEntryAbility(activeMon(),b.enemy,logs);
       b.log=logs.join(" "); renderBattle(); setTimeout(battleEnemyTurn,250);
     };
@@ -4660,16 +5379,31 @@ function loseBattle(){
 function endBattle(){
   state.battle=null; clearBattleEnvironment(); battleModal.classList.add("hidden"); renderHUD();
 }
+function shopInventoryForMap(){
+  const base=SHOP_ITEMS.filter(it=>state.badges>=it.minBadges);
+  const extra=[];
+  if(["shionagi","shioHarbor","yunohana"].includes(state.map)){
+    extra.push({name:"ダイブボール",price:1000,minBadges:0});
+  }
+  if(["yukinagi","setsugetsu","tsubaki"].includes(state.map)){
+    extra.push({name:"なんでもなおし",price:600,minBadges:0});
+  }
+  if(["tsubaki","sekisou"].includes(state.map)){
+    extra.push({name:"せんせいのツメ",price:5000,minBadges:0});
+  }
+  const seen=new Set();
+  return [...base,...extra].filter(it=>!seen.has(it.name)&&seen.add(it.name));
+}
 function openShop(){
   $("shopMoney").textContent=`所持金：₽ ${state.money.toLocaleString()} / バッジ ${state.badges}`;
   $("shopList").innerHTML="";
-  SHOP_ITEMS.filter(it=>state.badges>=it.minBadges).forEach(it=>{
+  shopInventoryForMap().forEach(it=>{
     const row=document.createElement("div"); row.className="shopRow";
-    row.innerHTML=`<span><b>${it.name}</b><div class="partyMini">₽${it.price} / バッジ${it.minBadges}以上</div></span>`;
+    row.innerHTML=`<span><b>${it.name}</b><div class="partyMini">₽${it.price}</div></span>`;
     const btn=document.createElement("button");btn.className="sysBtn";btn.textContent="買う";
     btn.onclick=()=>{
       if(state.money<it.price){say("ショップ","お金が足りない。");return;}
-      state.money-=it.price; addItem(it.name,1); renderHUD();
+      state.money-=it.price; addItem(it.name,1); renderHUD(); autosave("shop");
       $("shopMoney").textContent=`所持金：₽ ${state.money.toLocaleString()} / バッジ ${state.badges}`;
     };
     row.appendChild(btn);$("shopList").appendChild(row);
@@ -4680,6 +5414,26 @@ function openShop(){
 
 let activeCutscene=null;
 let cutsceneIndex=0;
+
+let audioCtx=null;
+function beep(freq=440,duration=.08,volume=.035,type="sine"){
+  try{
+    audioCtx ??= new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type;o.frequency.value=freq;g.gain.value=volume;
+    o.connect(g);g.connect(audioCtx.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);
+    o.stop(audioCtx.currentTime+duration);
+  }catch(e){}
+}
+function sfx(kind){
+  if(kind==="encounter"){beep(330,.07,.035,"square");setTimeout(()=>beep(494,.09,.03,"square"),70);}
+  else if(kind==="catch"){beep(523,.08);setTimeout(()=>beep(659,.08),90);setTimeout(()=>beep(784,.12),180);}
+  else if(kind==="level"){beep(440,.07);setTimeout(()=>beep(554,.07),70);setTimeout(()=>beep(659,.12),140);}
+  else if(kind==="badge"){beep(523,.08);setTimeout(()=>beep(659,.08),80);setTimeout(()=>beep(784,.08),160);setTimeout(()=>beep(1046,.14),240);}
+  else if(kind==="click"){beep(420,.035,.018);}
+}
+
 function showEventBanner(text,duration=1200){
   eventBanner.textContent=text;
   eventBanner.classList.remove("hidden");
@@ -4716,6 +5470,7 @@ function nextCutsceneStep(){if(activeCutscene){cutsceneIndex++;renderCutsceneSte
 $("cutsceneNext").addEventListener("click",nextCutsceneStep);
 
 function badgeCutscene(num,leader,badgeName){
+  sfx("badge");
   runCutscene(`badge_${num}`,[
     {banner:`BADGE ${num} GET!`,duration:950},{effect:"flash"},
     {speaker:leader,text:`勝利だ。${badgeName}を受け取ってくれ！`},
@@ -4753,6 +5508,7 @@ function tileClass(ch){
 function isBlocked(ch){ return ["T","R","W","C","L"].includes(ch); }
 
 function renderMap(){
+  ensureCurrentPositionSafe();
   const m=maps[state.map];
   mapNameEl.textContent=m.name;
   mapEl.innerHTML="";
@@ -4814,20 +5570,92 @@ function updateAllSigils(){
 }
 function exitAt(x,y){ return maps[state.map].exits.find(e=>e.x===x&&e.y===y); }
 
+
+function isWalkableTile(mapId,x,y){
+  const m=maps[mapId];
+  if(!m || x<0 || y<0 || y>=m.rows.length || x>=m.rows[y].length) return false;
+  const ch=m.rows[y][x];
+  return !isBlocked(ch) && !m.npcs.some(n=>n.x===x&&n.y===y);
+}
+function nearestSafeTile(mapId,x,y){
+  if(isWalkableTile(mapId,x,y)) return {x,y};
+  for(let r=1;r<=4;r++){
+    for(let dy=-r;dy<=r;dy++){
+      for(let dx=-r;dx<=r;dx++){
+        if(Math.abs(dx)!==r && Math.abs(dy)!==r) continue;
+        const nx=x+dx, ny=y+dy;
+        if(isWalkableTile(mapId,nx,ny)) return {x:nx,y:ny};
+      }
+    }
+  }
+  const s=maps[mapId]?.start;
+  if(s && isWalkableTile(mapId,s.x,s.y)) return {x:s.x,y:s.y};
+  return {x:1,y:1};
+}
+function ensureCurrentPositionSafe(){
+  if(isWalkableTile(state.map,state.x,state.y)) return;
+  const p=nearestSafeTile(state.map,state.x,state.y);
+  state.x=p.x; state.y=p.y;
+}
+
+
+function isRoadTrainer(n){
+  return !!(n?.flag && TRAINERS[n.flag] && /^route\d+Trainer/.test(n.flag));
+}
+function clearLineBetween(x1,y1,x2,y2){
+  const m=maps[state.map];
+  if(x1===x2){
+    const a=Math.min(y1,y2)+1,b=Math.max(y1,y2);
+    for(let y=a;y<b;y++){
+      const ch=m.rows[y][x1];
+      if(isBlocked(ch) || m.npcs.some(n=>n.x===x1&&n.y===y)) return false;
+    }
+    return true;
+  }
+  if(y1===y2){
+    const a=Math.min(x1,x2)+1,b=Math.max(x1,x2);
+    for(let x=a;x<b;x++){
+      const ch=m.rows[y1][x];
+      if(isBlocked(ch) || m.npcs.some(n=>n.x===x&&n.y===y1)) return false;
+    }
+    return true;
+  }
+  return false;
+}
+function checkTrainerSight(){
+  if(state.battle || !/^route\d+$/.test(state.map)) return false;
+  const candidates=maps[state.map].npcs
+    .filter(n=>isRoadTrainer(n) && !state.flags[n.flag])
+    .filter(n=>{
+      const dist=Math.abs(n.x-state.x)+Math.abs(n.y-state.y);
+      return dist>0 && dist<=3 && clearLineBetween(n.x,n.y,state.x,state.y);
+    })
+    .sort((a,b)=>(Math.abs(a.x-state.x)+Math.abs(a.y-state.y))-(Math.abs(b.x-state.x)+Math.abs(b.y-state.y)));
+  const n=candidates[0];
+  if(!n) return false;
+  showEventBanner("！",420);
+  setTimeout(()=>{
+    say(n.name,"見つけた！ 勝負だ！");
+    setTimeout(()=>startTrainerBattle(n.flag,TRAINERS[n.flag]),260);
+  },180);
+  return true;
+}
+
 function move(dx,dy,dir){
-  if(!cutsceneOverlay.classList.contains("hidden") || !battleModal.classList.contains("hidden") || !bagModal.classList.contains("hidden") || !partyModal.classList.contains("hidden") || !boxModal.classList.contains("hidden") || !dexModal.classList.contains("hidden") || !detailModal.classList.contains("hidden") || !shopModal.classList.contains("hidden")) return;
+  if(!titleScreen.classList.contains("hidden") || !cutsceneOverlay.classList.contains("hidden") || !battleModal.classList.contains("hidden") || !bagModal.classList.contains("hidden") || !partyModal.classList.contains("hidden") || !boxModal.classList.contains("hidden") || !dexModal.classList.contains("hidden") || !dexDetailModal.classList.contains("hidden") || !detailModal.classList.contains("hidden") || !moveTutorModal.classList.contains("hidden") || !ballModal.classList.contains("hidden") || !shopModal.classList.contains("hidden")) return;
   state.dir=dir;
   const nx=state.x+dx, ny=state.y+dy;
   if(nx<0||ny<0||nx>=W||ny>=H) return;
   const row=maps[state.map].rows[ny];
   if(!row) return;
   const ch=row[nx];
-  if(isBlocked(ch) || npcAt(nx,ny)){
+  const ex=exitAt(nx,ny);
+  // 出口マスは地形文字が壁・屋根でも進入可能として扱う。
+  if((isBlocked(ch) && !ex) || npcAt(nx,ny)){
     say("ガイド","ここは通れない。");
     return;
   }
   state.x=nx; state.y=ny; renderPlayer();
-  const ex=exitAt(nx,ny);
   if(ex){
     if(ex.require && !state.flags[ex.require]){
       state.x-=dx; state.y-=dy; renderPlayer();
@@ -4835,18 +5663,22 @@ function move(dx,dy,dir){
       return;
     }
     state.map=ex.to; state.x=ex.tx; state.y=ex.ty;
-    renderMap(); say("移動",ex.msg);
+    const safe=nearestSafeTile(state.map,state.x,state.y);
+    state.x=safe.x; state.y=safe.y;
+    renderMap(); say("移動",ex.msg); autosave("map");
     return;
   }
-  if(ch==="G" && !state.battle){
+  if(checkTrainerSight()) return;
+  const isWaterEncounter = state.map==="route13" && ch==="P";
+  if((ch==="G" || isWaterEncounter) && !state.battle){
     state.grassSteps=(state.grassSteps||0)+1;
-    const encounter = Math.random()<0.22 || state.grassSteps>=6;
+    const encounter = Math.random()<0.14 || state.grassSteps>=10;
     if(encounter){
       state.grassSteps=0;
       const wild=randomWild();
       startWildBattle(wild);
     }
-  }else if(ch!=="G"){
+  }else if(ch!=="G" && !isWaterEncounter){
     state.grassSteps=0;
   }
 }
@@ -4854,10 +5686,71 @@ function frontPos(){
   const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[state.dir];
   return [state.x+d[0],state.y+d[1]];
 }
+
+const GYM_PUZZLES = {
+  gym1PuzzleA:{next:"gym1PuzzleB",name:"石盤",success:"石盤を正しい向きに回した。奥の石扉が少し動いた！"},
+  gym1PuzzleB:{prev:"gym1PuzzleA",name:"岩スイッチ",success:"岩スイッチが沈み、ガンジへの道が開いた！"},
+  gym2PuzzleA:{next:"gym2PuzzleB",name:"風向計",success:"風向計を北向きに合わせた！"},
+  gym2PuzzleB:{prev:"gym2PuzzleA",name:"送風機",success:"上昇気流が安定し、スズネへの道が開いた！"},
+  gym3PuzzleA:{next:"gym3PuzzleB",name:"地面スイッチ",success:"重い床板が沈んだ！"},
+  gym3PuzzleB:{prev:"gym3PuzzleA",name:"岩盤レバー",success:"岩盤が動き、ゲンゾウへの通路が現れた！"},
+  gym4PuzzleA:{next:"gym4PuzzleB",name:"薬草バルブ",success:"薬草の香りを正しい配管へ流した！"},
+  gym4PuzzleB:{prev:"gym4PuzzleA",name:"毒霧装置",success:"毒霧が晴れ、レイカへの道が開いた！"},
+  gym5PuzzleA:{next:"gym5PuzzleB",name:"第1水門",success:"第1水門を開いた！"},
+  gym5PuzzleB:{prev:"gym5PuzzleA",name:"第2水門",success:"水位が下がり、カイトへの通路が現れた！"},
+  gym6PuzzleA:{next:"gym6PuzzleB",name:"小歯車",success:"小歯車を噛み合わせた！"},
+  gym6PuzzleB:{prev:"gym6PuzzleA",name:"主歯車",success:"巨大歯車が回転し、テツジへの道が開いた！"},
+  gym7PuzzleA:{next:"gym7PuzzleB",name:"氷床スイッチ",success:"氷床の向きが変わった！"},
+  gym7PuzzleB:{prev:"gym7PuzzleA",name:"氷柱スイッチ",success:"氷柱が退き、セリナへの道が開いた！"},
+  gym8PuzzleA:{next:"gym8PuzzleB",name:"配電盤A",success:"配電盤Aに電力を通した！"},
+  gym8PuzzleB:{prev:"gym8PuzzleA",name:"配電盤B",success:"全回路が接続され、レントへの道が開いた！"}
+};
+function handleGymPuzzle(flag){
+  const p=GYM_PUZZLES[flag]; if(!p)return false;
+  if(state.flags[flag]){
+    say(p.name,"すでに正しく作動している。"); return true;
+  }
+  if(p.prev && !state.flags[p.prev]){
+    say(p.name,"まだ作動しない。先にもう一方の仕掛けを調べよう。"); return true;
+  }
+  state.flags[flag]=true; autosave("gym puzzle");
+  showEventBanner("ギミック解除！",650);
+  say(p.name,p.success);
+  return true;
+}
+
 function action(){
   const [fx,fy]=frontPos();
   const n=npcAt(fx,fy);
   if(n){
+    if(n.flag && GYM_PUZZLES[n.flag]){
+      handleGymPuzzle(n.flag); return;
+    }
+    if(n.flag==="friend1"){
+      startFriend1Battle();
+      return;
+    }
+    const gymGateMap={
+      gym2:["gym2Trainer1","gym2Trainer2"],
+      gym3:["gym3Trainer1","gym3Trainer2"],
+      gym4:["gym4Trainer1","gym4Trainer2"],
+      gym5:["gym5Trainer1","gym5Trainer2"],
+      gym6:["gym6Trainer1","gym6Trainer2"],
+      gym7:["gym7Trainer1","gym7Trainer2"],
+      gym8:["gym8Trainer1","gym8Trainer2"]
+    };
+    if(gymGateMap[n.flag] && !state.flags[n.flag]){
+      const left=gymGateMap[n.flag].filter(f=>!state.flags[f]);
+      if(left.length){
+        say(n.name,`まずジムトレーナーを全員倒してきてください。残り${left.length}人です。`);
+        return;
+      }
+      const puzzleFinal={gym2:"gym2PuzzleB",gym3:"gym3PuzzleB",gym4:"gym4PuzzleB",gym5:"gym5PuzzleB",gym6:"gym6PuzzleB",gym7:"gym7PuzzleB",gym8:"gym8PuzzleB"}[n.flag];
+      if(puzzleFinal && !state.flags[puzzleFinal]){
+        say(n.name,"ジムの仕掛けをすべて解除してから挑戦してください。");
+        return;
+      }
+    }
     if(n.flag==="gym1" && !state.flags.gym1){
       const cleared=state.flags.nagaraGymTrainer1 && state.flags.nagaraGymTrainer2 && state.flags.nagaraGymTrainer3;
       if(!cleared){
@@ -4869,6 +5762,33 @@ function action(){
         say("ガンジ",`俺と戦う前に、ジムトレーナー全員を突破してこい！ 残り：${left.join("・")}`);
         return;
       }
+      if(!state.flags.gym1PuzzleB){
+        say("ガンジ","石の仕掛けを解いて、ここまで道を開いてこい！");
+        return;
+      }
+    }
+    if(n.flag==="selmaBattle" && !state.flags.selmaBattle){
+      runCutscene("selma_boss_intro",[
+        {speaker:"セルマ",text:"ここまで来るとは思っていたわ。"},
+        {speaker:"セルマ",text:"私は計画そのものには反対。でも、ボスに借りがある。まずは私を越えて。"},
+        {banner:"EXECUTIVE SELMA",duration:850}
+      ],()=>startTrainerBattle("selmaBattle",TRAINERS.selmaBattle));
+      return;
+    }
+    if(n.flag==="valdBattle" && !state.flags.valdBattle){
+      runCutscene("vald_boss_intro",[
+        {effect:"shake"},{banner:"SUPREMA BOSS VALD",duration:1000},
+        {speaker:"ヴァルド",text:"弱い者は強い者に逆らえない。それが私の知る世界だ。"},
+        {speaker:"ヴァルド",text:"君が違うと言うなら、力で証明しろ。"}
+      ],()=>startTrainerBattle("valdBattle",TRAINERS.valdBattle));
+      return;
+    }
+    if(n.flag==="legendCalm" && !state.flags.legendCalm){
+      runCutscene("legend_battle_intro",[
+        {effect:"shake"},{banner:"LEGENDARY BATTLE",duration:1000},
+        {speaker:"語り",text:"暴走する二体の伝説が海を揺らす。戦いを通じて怒りを鎮めろ！"}
+      ],()=>startTrainerBattle("legendCalm",TRAINERS.legendCalm));
+      return;
     }
     if(n.flag==="ruinsBattle" && !state.flags.ruinsBattle){
       runCutscene("hida_guardian_capture",[
@@ -4879,8 +5799,28 @@ function action(){
       ],()=>startTrainerBattle(n.flag,TRAINERS[n.flag]));
       return;
     }
-    if(n.flag && TRAINERS[n.flag] && !state.flags[n.flag]){
-      startTrainerBattle(n.flag,TRAINERS[n.flag]);
+    if(n.flag && TRAINERS[n.flag]){
+      const gymRematches=["rematchGanji","rematchSuzune","rematchGenzou","rematchReika","rematchKaito","rematchTetsuji","rematchSerina","rematchRento"];
+      const eliteRematches=["eliteRematch1","eliteRematch2","eliteRematch3","eliteRematch4"];
+      if(gymRematches.includes(n.flag) && !state.flags.rematchUnlock){
+        say(n.name,"まだ強化再戦の挑戦状が届いていない。"); return;
+      }
+      if(eliteRematches.includes(n.flag) && !state.flags.eliteRematchStart){
+        say(n.name,"リーグ受付で強化再戦を開始してから来てくれ。"); return;
+      }
+      if(n.flag==="hulkRematch" && !(state.flags.eliteRematch1&&state.flags.eliteRematch2&&state.flags.eliteRematch3&&state.flags.eliteRematch4)){
+        say("ハルク","先に四天王4人との強化再戦を終えてきてくれ。"); return;
+      }
+      if(!state.flags[n.flag]){
+        startTrainerBattle(n.flag,TRAINERS[n.flag]);
+      }else{
+        const defeatedText =
+          /^gym\d+Trainer/.test(n.flag) ? "ジムリーダー戦、頑張って！ さっきの勝負は勉強になったよ。" :
+          /^route/.test(n.flag) ? "さっきは負けたよ。次に会う時はもっと強くなってるからね！" :
+          /rival/i.test(n.flag) ? "……今回はお前の勝ちだ。次はそうはいかない。" :
+          "さっきの勝負、見事だったよ。";
+        say(n.name,defeatedText);
+      }
       return;
     }
     say(n.name,n.text);
@@ -4906,7 +5846,7 @@ function action(){
     } else if(n.flag==="friend2"){
       if(!state.flags.friend2){
         state.flags.friend2=true;
-        say("親友","勝負しよう！ ……やっぱり強いね！ 次はアズミシティだって！　5番道路へ進めるようになった！");
+        say("親友",`相性では私の御三家が不利だけど、やっぱり勝負はそれだけじゃないね！ 次はアズミシティだって！ 5番道路へ進めるようになった！`);
       } else {
         say("親友","アズミシティ、楽しみだね！");
       }
@@ -4922,7 +5862,7 @@ function action(){
         say("ガチライバル","まず第2ジムを倒してこい。今のお前と戦っても意味がない。");
       } else if(!state.flags.rival1){
         state.flags.rival1=true;
-        say("ガチライバル","御三家、ニューラ、ヒトツキで勝負だ。……ちっ、負けたか。次はこうはいかない。西のセンコウ、東のツルネ、好きな方から行け。");
+        say("ガチライバル",`タイプ相性で有利な御三家を選んだ。それでも負けたか……。次はこうはいかない。西のセンコウ、東のツルネ、好きな方から行け。`);
       } else {
         say("ガチライバル","センコウとツルネ、どっちから行くかはお前次第だ。");
       }
@@ -5078,11 +6018,21 @@ function action(){
         if(state.flags.mireiFinal) state.flags.execsFinal=true;
         say("ロザ","ミレイを泣かせたわね！ ……くっ、でも外にはボスがいるわよ！");
       }
-    } else if(n.flag==="freeGuardians"){
-      if(!state.flags.freeGuardians){
-        state.flags.freeGuardians=true;
-        say("三守護者","拘束装置を破壊した！ ガンライオウ、エキレイカ、ドウガエンが主人公を認めるように頷いた。");
-      }
+    } else if(n.flag==="freeGanrai"){
+      if(!state.flags.freeGanrai){
+        state.flags.freeGanrai=true; repairProgressFlags();
+        say("ガンライオウ","拘束装置を破壊した！ ガンライオウは翼を広げ、主人公に力強く頷いた。");
+      } else say("ガンライオウ","解放されたガンライオウが静かにこちらを見守っている。");
+    } else if(n.flag==="freeEkirei"){
+      if(!state.flags.freeEkirei){
+        state.flags.freeEkirei=true; repairProgressFlags();
+        say("エキレイカ","拘束装置を破壊した！ エキレイカはゆっくり立ち上がり、主人公の手に鼻先を寄せた。");
+      } else say("エキレイカ","解放されたエキレイカが落ち着きを取り戻している。");
+    } else if(n.flag==="freeDouga"){
+      if(!state.flags.freeDouga){
+        state.flags.freeDouga=true; repairProgressFlags();
+        say("ドウガエン","拘束装置を破壊した！ ドウガエンは拳を胸に当て、主人公を仲間と認めた。");
+      } else say("ドウガエン","解放されたドウガエンが海岸の方を気にしている。");
     } else if(n.flag==="valdBattle"){
       if(!state.flags.valdBattle){
         state.flags.valdBattle=true;
@@ -5377,17 +6327,21 @@ function action(){
         say("境界の祭壇","異なる世界をつなぐ力の余韻が残っている。");
       }
     } else if(n.flag==="momGift"){
-      if(!state.flags.momGift){ state.flags.momGift=true; addItem("キズぐすり",3); say("お母さん","旅立ちのお守りにキズぐすりを3個くれた！ バッグに入れた。"); }
-      else say("お母さん","困ったらいつでも帰っておいで。");
+      const first=!state.flags.momGift;
+      if(first){ state.flags.momGift=true; addItem("キズぐすり",3); }
+      healParty();
+      say("お母さん", first
+        ? "旅立ちのお守りにキズぐすりを3個あげるね。ポケモンたちも元気にしておいたよ！"
+        : "おかえり。ポケモンたち、少し休ませてあげようね。……みんな元気になったよ！");
     } else if(n.flag==="yahagiBerry"){
-      if(!state.flags.yahagiBerry){ state.flags.yahagiBerry=true; say("散歩中の女性","オレンのみを1個もらった！"); }
+      if(!state.flags.yahagiBerry){ state.flags.yahagiBerry=true; addItem("オレンのみ",1); say("散歩中の女性","オレンのみを1個もらった！ バッグに入れた。"); }
       else say("散歩中の女性","木の実は使いどころが大事よ。");
     } else if(n.flag==="mioBall"){
-      if(!state.flags.mioBall){ state.flags.mioBall=true; say("研究箱","モンスターボールを3個見つけた！ ミオのメモに『旅立つ子にどうぞ』と書いてある。"); }
+      if(!state.flags.mioBall){ state.flags.mioBall=true; addItem("モンスターボール",3); say("研究箱","モンスターボールを3個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="route1Trainer"){
       if(!state.flags.route1Trainer){ state.flags.route1Trainer=true; say("たんぱんこぞう","勝負だ！ ……負けた！ ヒカリまで気をつけてな！"); }
     } else if(n.flag==="route1Potion"){
-      if(!state.flags.route1Potion){ state.flags.route1Potion=true; say("落とし物","キズぐすりを1個拾った！"); }
+      if(!state.flags.route1Potion){ state.flags.route1Potion=true; addItem("キズぐすり",1); say("落とし物","キズぐすりを1個拾った！ バッグに入れた。"); }
       else say("落とし物","もう何も残っていない。");
     } else if(n.flag==="catchTutorial"){
       if(!state.flags.catchTutorial){ state.flags.catchTutorial=true; say("ミオ","野生のムックルを弱らせてボールを投げよう！ 捕獲成功！ 捕まえ方を覚えた！"); }
@@ -5638,21 +6592,56 @@ function action(){
   if(s){ say("看板",s.text); return; }
   say("ガイド","目の前には特に何もない。");
 }
+const SAVE_KEY="alciaSave";
+let autosaveTimer=null;
+function autosave(reason=""){
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+    if(reason){
+      clearTimeout(autosaveTimer);
+      autosaveToast.textContent="オートセーブしました";
+      autosaveToast.classList.add("show");
+      autosaveTimer=setTimeout(()=>autosaveToast.classList.remove("show"),900);
+    }
+  }catch(e){}
+}
+
+const LEGACY_SAVE_KEYS=[
+  "alciaMapAlpha33","alciaMapAlpha32","alciaMapAlpha31","alciaMapAlpha30",
+  "alciaMapAlpha29","alciaMapAlpha28","alciaMapAlpha27","alciaMapAlpha26",
+  "alciaMapAlpha25","alciaMapAlpha24","alciaMapAlpha23","alciaMapAlpha22","alciaMapAlpha21"
+];
 function save(){
-  localStorage.setItem("alciaMapAlpha32",JSON.stringify(state));
-  say("セーブ","現在の冒険を保存した。");
+  localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+  say("セーブ","現在の冒険を保存した。今後の更新でも同じセーブデータを使えます。");
+}
+function findSaveData(){
+  let raw=localStorage.getItem(SAVE_KEY);
+  if(raw) return {raw,key:SAVE_KEY};
+  for(const key of LEGACY_SAVE_KEYS){
+    raw=localStorage.getItem(key);
+    if(raw) return {raw,key};
+  }
+  return null;
 }
 function load(){
-  const raw=localStorage.getItem("alciaMapAlpha32");
-  if(!raw){ say("ロード","セーブデータがない。"); return; }
+  const found=findSaveData();
+  if(!found){ say("ロード","セーブデータがない。"); return; }
   try{
-    const s=JSON.parse(raw);
+    const s=JSON.parse(found.raw);
     Object.assign(state,s);
     normalizeState();
+    ensureCurrentPositionSafe();
+    localStorage.setItem(SAVE_KEY,JSON.stringify(state));
     starterModal.classList.add("hidden");
     renderHUD();
-    renderMap(); say("ロード","冒険を再開した。");
-  }catch(e){ say("ロード","セーブデータを読み込めなかった。"); }
+    renderMap();
+    say("ロード",found.key===SAVE_KEY
+      ?"冒険を再開した。"
+      :"旧バージョンのセーブデータを引き継いで冒険を再開した。");
+  }catch(e){
+    say("ロード","セーブデータを読み込めなかった。");
+  }
 }
 
 document.querySelectorAll(".choice").forEach(btn=>{
@@ -5663,9 +6652,10 @@ document.querySelectorAll(".choice").forEach(btn=>{
     state.activeIndex=0;
     partyEl.textContent="相棒："+state.starter;
     starterModal.classList.add("hidden");
-    renderHUD();
-    say("ミオ",state.starter+"を選ぶんだね！ ヒカリシティは西側。町の西口から1番道路へ行ってみよう！");
+    renderHUD(); autosave("starter");
+    say("ミオ",state.starter+"を選ぶんだね！ まずは親友と最初の勝負をしてみよう！");
     renderMap();
+    setTimeout(()=>startFriend1Battle(),450);
   });
 });
 
@@ -5679,8 +6669,11 @@ $("closeParty").addEventListener("click",()=>partyModal.classList.add("hidden"))
 $("closeBox").addEventListener("click",()=>boxModal.classList.add("hidden"));
 $("closeDex").addEventListener("click",()=>dexModal.classList.add("hidden"));
 $("closeDetail").addEventListener("click",()=>detailModal.classList.add("hidden"));
+$("closeDexDetail").addEventListener("click",()=>dexDetailModal.classList.add("hidden"));
+$("closeMoveTutor").addEventListener("click",()=>moveTutorModal.classList.add("hidden"));
+$("closeBall").addEventListener("click",()=>ballModal.classList.add("hidden"));
 $("closeShop").addEventListener("click",()=>shopModal.classList.add("hidden"));
-$("ballBtn").addEventListener("click",throwBall);
+$("ballBtn").addEventListener("click",openBallChooser);
 $("battlePotionBtn").addEventListener("click",useBattlePotion);
 $("switchBtn").addEventListener("click",openBattleSwitch);
 $("runBtn").addEventListener("click",tryRun);
@@ -5704,9 +6697,57 @@ document.addEventListener("keydown",(e)=>{
   else if(["enter"," "].includes(e.key)){e.preventDefault();action();}
 });
 
+
+function hasSave(){
+  return !!findSaveData();
+}
+function beginGameFromState(){
+  titleScreen.classList.add("hidden");
+  normalizeState();ensureCurrentPositionSafe();renderHUD();renderMap();
+}
+function newGame(){
+  localStorage.removeItem(SAVE_KEY);
+  for(const k of LEGACY_SAVE_KEYS) localStorage.removeItem(k);
+  location.reload();
+}
+$("continueBtn").disabled=!hasSave();
+$("continueBtn").addEventListener("click",()=>{
+  sfx("click");
+  const found=findSaveData();
+  if(!found){return;}
+  try{
+    Object.assign(state,JSON.parse(found.raw));
+    normalizeState();ensureCurrentPositionSafe();
+    localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+    starterModal.classList.add("hidden");
+    beginGameFromState();
+    say("ロード","冒険を再開した。");
+  }catch(e){ say("ロード","セーブデータを読み込めなかった。"); }
+});
+$("newGameBtn").addEventListener("click",()=>{
+  sfx("click");
+  localStorage.removeItem(SAVE_KEY);
+  for(const k of LEGACY_SAVE_KEYS) localStorage.removeItem(k);
+  titleScreen.classList.add("hidden");
+  normalizeState();renderHUD();renderMap();
+  autosave("new");
+});
+$("resetSaveBtn").addEventListener("click",()=>{
+  sfx("click");
+  if(confirm("セーブデータを消します。よろしいですか？")){
+    localStorage.removeItem(SAVE_KEY);
+    for(const k of LEGACY_SAVE_KEYS) localStorage.removeItem(k);
+    location.reload();
+  }
+});
+
 normalizeState();
 renderHUD();
 renderMap();
+</script>
+
+<script>
+document.addEventListener("touchstart",()=>{}, {passive:true});
 </script>
 </body>
 </html>
