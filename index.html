@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>アルシア地方 マップ移動版 α27 本編イベント・ボス演出・エンディング強化編</title>
+<title>アルシア地方 マップ移動版 α31 道路トレーナー・ナガラジム強化版</title>
 <style>
 :root{
   --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
@@ -49,6 +49,9 @@ h1{font-size:20px;margin:4px 0 10px}
 .dexNo{font-size:12px;color:#9eacb8}
 .dexCaught{font-size:12px}
 .evoNotice{border-left:3px solid #e9cb6f;padding:8px;background:#2b2516;border-radius:8px;margin-top:8px}
+.expOuter{height:8px;background:#303a44;border-radius:999px;overflow:hidden;margin-top:5px}
+.expInner{height:100%;background:#71a7ff;transition:width .2s}
+
 .detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .detailBox{background:#111923;border:1px solid var(--line);border-radius:10px;padding:9px}
 .tmTag{font-size:11px;color:#d8b7ff}
@@ -97,7 +100,7 @@ h1{font-size:20px;margin:4px 0 10px}
 </head>
 <body>
 <main>
-  <h1>アルシア地方 マップ移動版 α27 本編イベント・ボス演出・エンディング強化編</h1>
+  <h1>アルシア地方 マップ移動版 α31 道路トレーナー・ナガラジム強化版</h1>
   <div id="topbar">
     <span id="mapName" class="badge">ヤハギタウン</span>
     <span id="party" class="badge">相棒：未選択</span>
@@ -106,6 +109,7 @@ h1{font-size:20px;margin:4px 0 10px}
     <span id="moneyChip" class="statusChip">₽ 3,000</span>
     <span id="ballsChip" class="statusChip">モンスターボール ×0</span>
     <span id="partyCountChip" class="statusChip">手持ち 0/6</span>
+    <span id="expChip" class="statusChip">EXP -</span>
   </div>
 
   <section id="game">
@@ -230,7 +234,7 @@ h1{font-size:20px;margin:4px 0 10px}
   <div class="modalCard">
     <h2>遊び方</h2>
     <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
-    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α31では各道路のトレーナー数を大幅に増やしました。1番道路のトレーナーは全員ノーマル技のみ。ナガラジムには3人のジムトレーナーを配置し、全員倒すまでガンジには挑戦できません。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
     <button id="closeHelp" class="menuBtn">閉じる</button>
   </div>
 </div>
@@ -242,7 +246,7 @@ const $ = (id)=>document.getElementById(id);
 const mapEl=$("map"), playerEl=$("player"), mapNameEl=$("mapName"), partyEl=$("party");
 const dialogTextEl=$("dialogText"), starterModal=$("starterModal"), helpModal=$("helpModal");
 const battleModal=$("battleModal"), bagModal=$("bagModal"), partyModal=$("partyModal"), boxModal=$("boxModal"), dexModal=$("dexModal"), detailModal=$("detailModal"), shopModal=$("shopModal");
-const moneyChip=$("moneyChip"), ballsChip=$("ballsChip"), partyCountChip=$("partyCountChip");
+const moneyChip=$("moneyChip"), ballsChip=$("ballsChip"), partyCountChip=$("partyCountChip"), expChip=$("expChip");
 const cutsceneOverlay=$("cutsceneOverlay"), eventBanner=$("eventBanner");
 
 const state = {
@@ -257,6 +261,7 @@ const state = {
   weather:"なし",
   terrain:"なし",
   cutsceneSeen:{},
+  grassSteps:0,
   activeIndex:0,
   battle:null,
 
@@ -317,7 +322,9 @@ const maps = {
       {x:7,y:3,name:"たんぱんこぞう",text:"西へ行けばヒカリシティ！ その前に一戦しようぜ！",flag:"route1Trainer"},
       {x:4,y:7,name:"旅人",text:"草むらにはポッポやムックル、メリープ、ウパーがいるぞ。"},
       {x:8,y:2,name:"落とし物",text:"草むらに小さな袋が落ちている。",flag:"route1Potion"}
-    ],
+,
+      {x:3,y:2,name:"ミニスカート",text:"まだ旅を始めたばかりだけど、勝負なら負けないよ！",flag:"route1TrainerB"},
+      {x:8,y:7,name:"えんじ",text:"ぼくのポケモンもノーマル技だけで勝負するよ！",flag:"route1TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"yahagi",tx:1,ty:5,msg:"東へ戻り、ヤハギタウンへ着いた。"},
       {x:0,y:4,to:"hikari",tx:10,ty:5,msg:"西へ進み、ヒカリシティへ到着した。"}
@@ -382,7 +389,9 @@ const maps = {
       {x:3,y:4,name:"ミオ",text:"この辺で捕獲の練習をしよう！ 草むらでは野生ポケモンが飛び出してくるよ。",flag:"catchTutorial"},
       {x:8,y:7,name:"むしとりしょうねん",text:"北へ行けばササノタウン！ その前に勝負しよう！",flag:"route2Trainer"},
       {x:7,y:2,name:"木の実の木",text:"枝にオレンのみが実っている。",flag:"route2Berry"}
-    ],
+,
+      {x:2,y:3,name:"たんぱんこぞう",text:"北へ行く前にもう一戦どうだ！",flag:"route2TrainerB"},
+      {x:9,y:6,name:"ピクニックガール",text:"草むらで育てたポケモン、見てみて！",flag:"route2TrainerC"}    ],
     exits:[
       {x:5,y:9,to:"hikari",tx:5,ty:1,msg:"南へ戻り、ヒカリシティへ着いた。"},
       {x:5,y:0,to:"sasano",tx:5,ty:8,msg:"北へ進み、ササノタウンへ到着した。"}
@@ -444,7 +453,9 @@ const maps = {
       {x:3,y:3,name:"スクールボーイ",text:"ナガラシティのガンジさん、石の話になると止まらないんだって！ 勝負しよう！",flag:"route3Trainer"},
       {x:8,y:7,name:"旅人",text:"この先は川沿いだ。ナガラの街はもうすぐだよ。"},
       {x:7,y:2,name:"光る地面",text:"何かが埋まっているようだ。",flag:"route3HiddenItem"}
-    ],
+,
+      {x:8,y:3,name:"ミニスカート",text:"ナガラジムに挑むなら、私で腕試ししていく？",flag:"route3TrainerB"},
+      {x:3,y:7,name:"じゅくがえり",text:"タイプ相性の勉強中なんだ。勝負で試してみよう！",flag:"route3TrainerC"}    ],
     exits:[
       {x:5,y:9,to:"sasano",tx:5,ty:1,msg:"南へ進み、ササノタウンへ戻った。"},
       {x:5,y:0,to:"nagara",tx:5,ty:8,msg:"北へ進み、ナガラシティへ到着した。"}
@@ -504,13 +515,16 @@ const maps = {
     ],
     start:{x:5,y:8},
     npcs:[
-      {x:5,y:2,name:"ガンジ",text:"おお！ 挑戦者か！ 石の強さ、見せてやる！",flag:"gym1"}
+      {x:5,y:2,name:"ガンジ",text:"おお！ 挑戦者か！ 石の強さ、見せてやる！",flag:"gym1"},
+      {x:3,y:6,name:"ジムトレーナー・タクミ",text:"まずは俺を突破してみろ！ 岩場の基本を教えてやる！",flag:"nagaraGymTrainer1"},
+      {x:8,y:6,name:"ジムトレーナー・ユウナ",text:"岩タイプは硬いだけじゃないよ。戦い方を見てみて！",flag:"nagaraGymTrainer2"},
+      {x:8,y:3,name:"ジムトレーナー・ゴウ",text:"ガンジさんに挑む前の最後の関門だ！",flag:"nagaraGymTrainer3"}
     ],
     exits:[
       {x:5,y:9,to:"nagara",tx:3,ty:4,msg:"ナガラシティへ出た。"}
     ],
     signs:[
-      {x:6,y:8,text:"ナガラジム　いわタイプ"}
+      {x:6,y:8,text:"ナガラジム　いわタイプ / ジムトレーナー3人を全員倒すとガンジに挑戦できます"}
     ]
   },
   homeInterior:{
@@ -617,7 +631,9 @@ const maps = {
     npcs:[
       {x:5,y:3,name:"林業の人",text:"この先は木曽の山道だ。最近、小さな地震が増えてるから気をつけな。"},
       {x:8,y:7,name:"旅人",text:"東へ進めばキソノタウン。そこから先はさらに山深くなるよ。"}
-    ],
+,
+      {x:3,y:3,name:"やまおとこ",text:"木曽の山道はここからが本番だ！",flag:"route4TrainerA"},
+      {x:9,y:7,name:"キャンプボーイ",text:"山で鍛えたポケモンと勝負しよう！",flag:"route4TrainerB"}    ],
     exits:[
       {x:0,y:4,to:"nagara",tx:10,ty:4,msg:"西へ戻り、ナガラシティへ着いた。"},
       {x:11,y:4,to:"kiso",tx:1,ty:5,msg:"東へ進み、キソノタウンへ到着した。"}
@@ -678,7 +694,9 @@ const maps = {
       {x:3,y:4,name:"バードキーパー",text:"この辺は山風が強いから、ひこうポケモンが多いよ！",flag:"route5Trainer"},
       {x:8,y:7,name:"登山客",text:"この先を北東へ抜ければアズミシティだ。"},
       {x:7,y:2,name:"崖際の草むら",text:"珍しい羽根が落ちている。",flag:"route5Feather"}
-    ],
+,
+      {x:2,y:6,name:"バードキーパー",text:"風を読むのもトレーナーの技術だよ。",flag:"route5TrainerB"},
+      {x:9,y:3,name:"ピクニックガール",text:"安曇の風景もいいけど、勝負も楽しもう！",flag:"route5TrainerC"}    ],
     exits:[
       {x:5,y:0,to:"kiso",tx:5,ty:8,msg:"南西へ戻り、キソノタウンへ着いた。"},
       {x:5,y:9,to:"azumi",tx:5,ty:1,msg:"北東へ進み、アズミシティへ到着した。"}
@@ -769,7 +787,9 @@ const maps = {
       {x:7,y:3,name:"やまおとこ",text:"西へ進めばセンコウだ。鉱山と果樹園で有名な街だぞ。",flag:"route6Trainer"},
       {x:4,y:7,name:"旅人",text:"最近、果樹園の周りで黒服を見たって話がある。"},
       {x:8,y:2,name:"岩陰",text:"何か光っている。",flag:"route6Item"}
-    ],
+,
+      {x:2,y:6,name:"さぎょういん",text:"畑仕事で鍛えた足腰、勝負でも見せるぞ！",flag:"route6TrainerB"},
+      {x:9,y:3,name:"バックパッカー",text:"西へ行くほど地面が乾いてくるね。勝負しよう！",flag:"route6TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"azumi",tx:1,ty:4,msg:"東へ戻り、アズミシティへ着いた。"},
       {x:0,y:4,to:"senkou",tx:10,ty:5,msg:"西へ進み、センコウシティへ到着した。"}
@@ -854,7 +874,9 @@ const maps = {
       {x:4,y:3,name:"つりびと",text:"この先は湖と果樹園の街、ツルネだ。",flag:"route7Trainer"},
       {x:8,y:7,name:"薬草師",text:"湿地には珍しい毒草も多い。扱い方次第では薬になるよ。"},
       {x:7,y:2,name:"水辺の光",text:"水際に小さな石が落ちている。",flag:"route7Item"}
-    ],
+,
+      {x:2,y:6,name:"つりびと",text:"川沿いのポケモンはしぶといぞ！",flag:"route7TrainerB"},
+      {x:9,y:3,name:"アロマなおねえさん",text:"果樹園の香りの中で勝負しましょう。",flag:"route7TrainerC"}    ],
     exits:[
       {x:0,y:4,to:"azumi",tx:10,ty:4,msg:"西へ戻り、アズミシティへ着いた。"},
       {x:11,y:4,to:"tsurune",tx:1,ty:5,msg:"東へ進み、ツルネシティへ到着した。"}
@@ -1040,7 +1062,9 @@ const maps = {
       {x:3,y:4,name:"レンジャー",text:"この先は川沿いに南へ下る。テンリュウの集落は古い伝承で有名だ。",flag:"route8Trainer"},
       {x:8,y:7,name:"旅の学者",text:"ルミナークとノクザーク。二匹が最初から別々だったとは限らないらしい。"},
       {x:7,y:2,name:"河原",text:"丸く磨かれた石が落ちている。",flag:"route8Stone"}
-    ],
+,
+      {x:2,y:6,name:"レンジャー",text:"長い下り道でも集中を切らさないこと！",flag:"route8TrainerB"},
+      {x:9,y:3,name:"エリートトレーナー",text:"ここまで来た実力、確かめさせてもらう！",flag:"route8TrainerC"}    ],
     exits:[
       {x:5,y:0,to:"azumiReturn",tx:5,ty:8,msg:"北へ戻り、アズミシティへ着いた。"},
       {x:5,y:9,to:"tenryu",tx:5,ty:1,msg:"南へ進み、テンリュウタウンへ到着した。"}
@@ -1101,7 +1125,9 @@ const maps = {
       {x:3,y:4,name:"バードキーパー",text:"南へ行くほど海風が強くなるよ！",flag:"route9Trainer"},
       {x:8,y:7,name:"漁師",text:"シオナギは港町だ。最近、ユノハナ方面へ黒い船が増えてる。"},
       {x:7,y:2,name:"漂着物",text:"海風で流されてきた箱が引っかかっている。",flag:"route9Item"}
-    ],
+,
+      {x:2,y:6,name:"つりびと",text:"海風に負けないポケモンを育ててるんだ！",flag:"route9TrainerB"},
+      {x:9,y:3,name:"かいパンやろう",text:"海岸トレーニングの成果を見せるぜ！",flag:"route9TrainerC"}    ],
     exits:[
       {x:5,y:0,to:"tenryu",tx:5,ty:8,msg:"北へ戻り、テンリュウタウンへ着いた。"},
       {x:5,y:9,to:"shionagi",tx:5,ty:1,msg:"南へ進み、シオナギシティへ到着した。"}
@@ -1163,7 +1189,9 @@ const maps = {
       {x:4,y:3,name:"バックパッカー",text:"この辺は地面から熱が出てる。ユノハナは温泉の町だよ。",flag:"route10Trainer"},
       {x:8,y:7,name:"旅人",text:"最近、東の海岸に見慣れない施設ができたらしい。"},
       {x:7,y:2,name:"地熱の割れ目",text:"温かい石が落ちている。",flag:"route10Item"}
-    ],
+,
+      {x:2,y:6,name:"バックパッカー",text:"温泉街まであと少し。ここで一勝負！",flag:"route10TrainerB"},
+      {x:9,y:3,name:"ベテラン",text:"旅の疲れが出る頃だ。集中力を試そう。",flag:"route10TrainerC"}    ],
     exits:[
       {x:0,y:4,to:"shionagi",tx:10,ty:5,msg:"西へ戻り、シオナギシティへ着いた。"},
       {x:11,y:4,to:"yunohana",tx:1,ty:5,msg:"東へ進み、ユノハナタウンへ到着した。"}
@@ -1358,7 +1386,9 @@ const maps = {
     npcs:[
       {x:7,y:3,name:"リーグ職員",text:"飛騨方面は結界の影響で危険です。調査隊以外は立入禁止になっています。"},
       {x:4,y:7,name:"カイト",text:"洞窟の内部なら結界の影響が弱いらしい。そこから北へ抜けよう。"}
-    ],
+,
+      {x:2,y:6,name:"山岳レンジャー",text:"飛騨へ入るなら、この先の厳しさを知っておけ！",flag:"route14TrainerA"},
+      {x:9,y:3,name:"調査員",text:"調査隊でもポケモン勝負の腕は必要なんです。",flag:"route14TrainerB"}    ],
     exits:[
       {x:0,y:4,to:"hikari",tx:1,ty:7,msg:"南東へ戻り、ヒカリシティへ着いた。"},
       {x:5,y:0,to:"yuragi",tx:5,ty:8,msg:"北西へ進み、ユラギタウンへ到着した。"}
@@ -1499,7 +1529,9 @@ const maps = {
     npcs:[
       {x:3,y:4,name:"北部の旅人",text:"ここから先は雪国だ。海沿いのユキナギまで、もう少しだよ。"},
       {x:8,y:7,name:"調査員",text:"結界の向こうでも、北部の町は何とか持ちこたえているらしい。"}
-    ],
+,
+      {x:2,y:6,name:"スノーハイカー",text:"北側の寒さに慣れてきたか？ 勝負しよう！",flag:"route15TrainerA"},
+      {x:9,y:3,name:"旅のトレーナー",text:"雪道では判断の速さが大事だよ。",flag:"route15TrainerB"}    ],
     exits:[
       {x:5,y:9,to:"hidaRuins",tx:5,ty:1,msg:"南へ戻り、飛騨山脈の遺跡へ入った。"},
       {x:5,y:0,to:"yukinagi",tx:5,ty:8,msg:"北へ進み、ユキナギタウンへ到着した。"}
@@ -1561,7 +1593,9 @@ const maps = {
     npcs:[
       {x:7,y:3,name:"スキーヤー",text:"西へ行くと雪が少し穏やかになって、金属工芸の街ツバキが見えてくるよ。"},
       {x:4,y:7,name:"旅商人",text:"ツバキの工房は北部でも有名だ。鍛冶職人が多いんだよ。"}
-    ],
+,
+      {x:2,y:6,name:"スキーヤー",text:"雪原を駆けるスピード、見せてあげる！",flag:"route16TrainerA"},
+      {x:9,y:3,name:"旅商人",text:"商品だけじゃなくポケモンも育ててるんだ。",flag:"route16TrainerB"}    ],
     exits:[
       {x:11,y:4,to:"yukinagi",tx:1,ty:4,msg:"東へ戻り、ユキナギタウンへ着いた。"},
       {x:0,y:4,to:"tsubaki",tx:10,ty:5,msg:"西へ進み、ツバキシティへ到着した。"}
@@ -1726,7 +1760,9 @@ const maps = {
       {x:4,y:3,name:"発掘作業員",text:"この辺りは古い地層が多い。セキソウでは今も発掘が続いてるよ。",flag:"route17Trainer"},
       {x:8,y:7,name:"学生",text:"博物館には守護者の古い像が展示されてるんだって。"},
       {x:7,y:2,name:"古い採掘跡",text:"壁際に何か埋まっている。",flag:"route17Item"}
-    ],
+,
+      {x:2,y:6,name:"考古学者",text:"古い地層ばかり見ていても鈍るからね。勝負しよう。",flag:"route17TrainerB"},
+      {x:9,y:3,name:"ベテラントレーナー",text:"セキソウへ向かう者の実力を見せてもらおう。",flag:"route17TrainerC"}    ],
     exits:[
       {x:0,y:4,to:"tsubaki",tx:10,ty:5,msg:"東へ戻り、ツバキシティへ着いた。"},
       {x:11,y:4,to:"sekisou",tx:1,ty:5,msg:"西南西へ進み、セキソウタウンへ到着した。"}
@@ -1812,7 +1848,9 @@ const maps = {
       {x:4,y:3,name:"スキーヤー",text:"東へ行くほど雪が深くなる。セツゲツは北部でも特に寒い街だよ。",flag:"route18Trainer"},
       {x:8,y:7,name:"旅人",text:"セツゲツへはこのユキナギ側からしか入れないんだ。"},
       {x:7,y:2,name:"雪だまり",text:"雪の中で何かが光っている。",flag:"route18Item"}
-    ],
+,
+      {x:2,y:6,name:"スキーヤー",text:"この吹雪でも戦えるくらい鍛えてるよ！",flag:"route18TrainerB"},
+      {x:9,y:3,name:"エリートトレーナー",text:"セツゲツへ行くなら、このくらい突破してみせて！",flag:"route18TrainerC"}    ],
     exits:[
       {x:0,y:4,to:"yukinagi",tx:10,ty:4,msg:"西へ戻り、ユキナギタウンへ着いた。"},
       {x:11,y:4,to:"setsugetsu",tx:1,ty:5,msg:"東へ進み、セツゲツシティへ到着した。"}
@@ -2185,7 +2223,9 @@ const maps = {
       {x:7,y:3,name:"ベテラントレーナー",text:"8つのバッジを持つ者か。リーグへ行く前に、一戦どうだ。",flag:"route19Battle"},
       {x:4,y:7,name:"旅人",text:"この道を西へ行けばスイモンタウン。そこからセキガネはらはさらに西だ。"},
       {x:8,y:2,name:"草むらの荷物",text:"誰かの忘れ物がある。",flag:"route19Item"}
-    ],
+,
+      {x:2,y:6,name:"エリートトレーナー",text:"8バッジ持ち同士、遠慮はいらないね。",flag:"route19TrainerB"},
+      {x:9,y:3,name:"ベテラントレーナー",text:"リーグ前の仕上がりを見せてくれ。",flag:"route19TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"hikariLeague",tx:1,ty:4,msg:"東へ戻り、ヒカリシティへ着いた。"},
       {x:0,y:4,to:"suimon",tx:10,ty:5,msg:"西へ進み、スイモンタウンへ到着した。",require:"route19Battle",deny:"ベテラントレーナーが勝負を待っている。"}
@@ -2245,7 +2285,9 @@ const maps = {
       {x:6,y:3,name:"リーグ挑戦者",text:"この先はセキガネはら。チャンピオンロードの入口だ。",flag:"route20Trainer"},
       {x:3,y:7,name:"登山家",text:"ここから先は近道なし。最後まで自分の足で行くしかないぞ。"},
       {x:8,y:2,name:"岩陰",text:"リーグ挑戦者向けの補給品が置かれている。",flag:"route20Item"}
-    ],
+,
+      {x:2,y:6,name:"リーグ挑戦者",text:"ここまで来たなら、互いに全力でいこう！",flag:"route20TrainerB"},
+      {x:9,y:3,name:"エリートトレーナー",text:"チャンピオンロード直前の最終チェックだ！",flag:"route20TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"suimon",tx:1,ty:4,msg:"東へ戻り、スイモンタウンへ着いた。"},
       {x:0,y:4,to:"sekigane",tx:10,ty:5,msg:"西へ進み、セキガネはらへ到着した。"}
@@ -3459,6 +3501,7 @@ const maps = {
 
 const MOVES = {
   "たいあたり":{type:"ノーマル",power:40,pp:35},
+  "でんこうせっか":{type:"ノーマル",power:40,pp:30,priority:1},
   "ひっかく":{type:"ノーマル",power:40,pp:35},
   "このは":{type:"くさ",power:40,pp:40},
   "つるのムチ":{type:"くさ",power:45,pp:25},
@@ -3676,7 +3719,7 @@ const WILD_TABLES = {
 };
 
 const TRAINERS = {
-  route1Trainer:{name:"たんぱんこぞう",team:[["ポッポ",3]],reward:120},
+  route1Trainer:{name:"たんぱんこぞう",team:[["ポッポ",3]],reward:120,normalOnly:true},
   route2Trainer:{name:"むしとりしょうねん",team:[["ムックル",5],["メリープ",5]],reward:200},
   route3Trainer:{name:"スクールボーイ",team:[["ウパー",7],["ポッポ",7]],reward:260},
   route5Trainer:{name:"バードキーパー",team:[["ムックル",12],["キャモメ",12]],reward:420},
@@ -3713,6 +3756,43 @@ const TRAINERS = {
   ,mireiFinal:{name:"ミレイ",team:[["デカヌチャン",47],["ニンフィア",48],["ユキメノコ",48]],reward:3000}
   ,rozaFinal:{name:"ロザ",team:[["デルビル",48],["ウルガモス",49],["カザンガ",50]],reward:3000}
 
+  ,route1TrainerB:{name:"ミニスカート",team:[["ムックル",3]],reward:120,normalOnly:true}
+  ,route1TrainerC:{name:"えんじ",team:[["ポッポ",3],["ムックル",3]],reward:140,normalOnly:true}
+  ,route2TrainerB:{name:"たんぱんこぞう",team:[["メリープ",5]],reward:180}
+  ,route2TrainerC:{name:"ピクニックガール",team:[["ポッポ",5],["ウパー",5]],reward:200}
+  ,route3TrainerB:{name:"ミニスカート",team:[["メリープ",7],["ムックル",7]],reward:260}
+  ,route3TrainerC:{name:"じゅくがえり",team:[["ウパー",8]],reward:280}
+  ,route4TrainerA:{name:"やまおとこ",team:[["イシツブテ",9],["サンド",9]],reward:320}
+  ,route4TrainerB:{name:"キャンプボーイ",team:[["デルビル",9]],reward:300}
+  ,route5TrainerB:{name:"バードキーパー",team:[["ムックル",12],["キャモメ",12]],reward:420}
+  ,route5TrainerC:{name:"ピクニックガール",team:[["ロゼリア",12],["メリープ",12]],reward:420}
+  ,route6TrainerB:{name:"さぎょういん",team:[["サンド",16],["イシツブテ",16]],reward:560}
+  ,route6TrainerC:{name:"バックパッカー",team:[["デルビル",17]],reward:540}
+  ,route7TrainerB:{name:"つりびと",team:[["ウパー",17],["キャモメ",17]],reward:560}
+  ,route7TrainerC:{name:"アロマなおねえさん",team:[["ロゼリア",18]],reward:580}
+  ,route8TrainerB:{name:"レンジャー",team:[["メリープ",22],["ロゼリア",22]],reward:800}
+  ,route8TrainerC:{name:"エリートトレーナー",team:[["ムックル",23],["ウパー",23]],reward:860}
+  ,route9TrainerB:{name:"つりびと",team:[["キャモメ",25],["ウパー",25]],reward:900}
+  ,route9TrainerC:{name:"かいパンやろう",team:[["キャモメ",26],["ランターン",26]],reward:960}
+  ,route10TrainerB:{name:"バックパッカー",team:[["デルビル",28],["ニューラ",28]],reward:1000}
+  ,route10TrainerC:{name:"ベテラン",team:[["イシツブテ",29],["ロゼリア",29]],reward:1050}
+  ,route14TrainerA:{name:"山岳レンジャー",team:[["ニューラ",35],["イシツブテ",35]],reward:1250}
+  ,route14TrainerB:{name:"調査員",team:[["ドータクン",36],["ロゼリア",36]],reward:1300}
+  ,route15TrainerA:{name:"スノーハイカー",team:[["スノーバー",38],["クマシュン",38]],reward:1350}
+  ,route15TrainerB:{name:"旅のトレーナー",team:[["ニューラ",39],["タマザラシ",39]],reward:1400}
+  ,route16TrainerA:{name:"スキーヤー",team:[["クマシュン",40],["スノーバー",40]],reward:1450}
+  ,route16TrainerB:{name:"旅商人",team:[["ニューラ",41],["ドータクン",41]],reward:1500}
+  ,route17TrainerB:{name:"考古学者",team:[["ドータクン",43],["イシツブテ",43]],reward:1550}
+  ,route17TrainerC:{name:"ベテラントレーナー",team:[["トリデプス",44],["ニューラ",44]],reward:1650}
+  ,route18TrainerB:{name:"スキーヤー",team:[["クマシュン",44],["スノーバー",44]],reward:1650}
+  ,route18TrainerC:{name:"エリートトレーナー",team:[["ユキメノコ",45],["ニューラ",45]],reward:1750}
+  ,route19TrainerB:{name:"エリートトレーナー",team:[["ルカリオ",52],["ニンフィア",52]],reward:2350}
+  ,route19TrainerC:{name:"ベテラントレーナー",team:[["ミロカロス",53],["ボーマンダ",53]],reward:2450}
+  ,route20TrainerB:{name:"リーグ挑戦者",team:[["ルカリオ",54],["マニューラ",54]],reward:2550}
+  ,route20TrainerC:{name:"エリートトレーナー",team:[["ガブリアス",55],["ニンフィア",55]],reward:2700}
+  ,nagaraGymTrainer1:{name:"ジムトレーナー・タクミ",team:[["イシツブテ",12],["サンド",12]],reward:500}
+  ,nagaraGymTrainer2:{name:"ジムトレーナー・ユウナ",team:[["ノズパス",13]],reward:520}
+  ,nagaraGymTrainer3:{name:"ジムトレーナー・ゴウ",team:[["イシツブテ",13],["ノズパス",14]],reward:560}
 };
 
 const TM_DATA = {
@@ -3768,6 +3848,8 @@ function normalizeState(){
   state.tms ??= {"わざマシン01":0,"わざマシン02":0,"わざマシン03":0,"わざマシン04":0};
   state.badges ??= 0;
   state.cutsceneSeen ??= {};
+  state.grassSteps ??= 0;
+  recountBadges();
   state.mons.forEach(m=>{
     if(!m.types) m.types=[m.type||"ノーマル"];
     if(!m.moves) m.moves=[m.move||"たいあたり","たいあたり","かみつく","たいあたり"];
@@ -3798,6 +3880,7 @@ function renderHUD(){
   moneyChip.textContent = `₽ ${state.money.toLocaleString()}`;
   ballsChip.textContent = `モンスターボール ×${state.bag["モンスターボール"]||0}`;
   partyCountChip.textContent = `手持ち ${state.mons.length}/6・BOX ${state.box.length}`;
+  expChip.textContent = a ? `EXP ${a.exp}/${expToNext(a)}` : "EXP -";
 }
 
 function registerSeen(name){ normalizeState(); state.dex.seen[name]=true; }
@@ -4014,6 +4097,16 @@ function healParty(){
   renderHUD();
 }
 function addItem(name,n=1){ state.bag[name]=(state.bag[name]||0)+n; renderHUD(); }
+function grantItemOnce(rewardFlag,name,n=1){
+  if(state.flags[rewardFlag]) return false;
+  state.flags[rewardFlag]=true;
+  addItem(name,n);
+  return true;
+}
+function removeItem(name,n=1){
+  state.bag[name]=Math.max(0,(state.bag[name]||0)-n);
+  renderHUD();
+}
 
 function wildLevelForMap(){
   const routeNum=parseInt((state.map.match(/\d+/)||["1"])[0],10);
@@ -4198,9 +4291,59 @@ function chooseEnemyMove(mon,player){
   if(Math.random()<.75) return candidates[0];
   return candidates[Math.floor(Math.random()*candidates.length)];
 }
-function priorityRoll(mon){
-  return mon.held==="せんせいのツメ" && Math.random()<.2 ? 1000 : effectiveSpe(mon)*weatherSpeedMod(mon);
+function priorityRoll(mon,moveName=null){
+  const movePriority=moveName && MOVES[moveName] ? (MOVES[moveName].priority||0)*10000 : 0;
+  const claw=mon.held==="せんせいのツメ" && Math.random()<.2 ? 1000 : 0;
+  return movePriority + claw + effectiveSpe(mon)*weatherSpeedMod(mon);
 }
+
+function recountBadges(){
+  state.badges=["gym1","gym2","gym3","gym4","gym5","gym6","gym7","gym8"]
+    .reduce((n,k)=>n+(state.flags[k]?1:0),0);
+  return state.badges;
+}
+function completeTrainerProgress(flag){
+  if(!flag) return;
+  const rewardKey="rewarded_"+flag;
+  if(state.flags[rewardKey]) return;
+  state.flags[rewardKey]=true;
+
+  if(flag==="gym1"){
+    recountBadges();
+    state.tms["わざマシン01"]=(state.tms["わざマシン01"]||0)+1;
+    badgeCutscene(1,"ガンジ","ストーンバッジ");
+  }else if(flag==="gym2"){
+    recountBadges();
+    state.tms["わざマシン02"]=(state.tms["わざマシン02"]||0)+1;
+    badgeCutscene(2,"スズネ","ウイングバッジ");
+  }else if(flag==="gym3"){
+    recountBadges();
+    if(state.flags.gym4) state.flags.bothMidGyms=true;
+    badgeCutscene(3,"ゲンゾウ","アースバッジ");
+  }else if(flag==="gym4"){
+    recountBadges();
+    if(state.flags.gym3) state.flags.bothMidGyms=true;
+    badgeCutscene(4,"レイカ","ポイズンバッジ");
+  }else if(flag==="gym5"){
+    recountBadges();
+    badgeCutscene(5,"カイト","タイドバッジ");
+  }else if(flag==="gym6"){
+    recountBadges();
+    state.tms["わざマシン03"]=(state.tms["わざマシン03"]||0)+1;
+    badgeCutscene(6,"テツジ","スチールバッジ");
+  }else if(flag==="gym7"){
+    recountBadges();
+    state.tms["わざマシン04"]=(state.tms["わざマシン04"]||0)+1;
+    badgeCutscene(7,"セリナ","スノーバッジ");
+  }else if(flag==="gym8"){
+    recountBadges();
+    badgeCutscene(8,"レント","ボルトバッジ");
+  }else if(flag==="mireiFinal" || flag==="rozaFinal"){
+    if(state.flags.mireiFinal && state.flags.rozaFinal) state.flags.execsFinal=true;
+  }
+  renderHUD();
+}
+
 function startWildBattle(name){
   let idx=healthyIndex(state.activeIndex);
   if(idx<0){ say("ガイド","戦えるポケモンがいない。ポケモンセンターで回復しよう。"); return; }
@@ -4221,6 +4364,12 @@ function startTrainerBattle(flag,def){
   state.activeIndex=idx;
   setBattleEnvironment(def);
   const team=def.team.map(([name,lv])=>makeMon(name,lv));
+  if(def.normalOnly){
+    team.forEach(m=>{
+      m.moves=["たいあたり","でんこうせっか"];
+      m.pp={"たいあたり":MOVES["たいあたり"].pp,"でんこうせっか":MOVES["でんこうせっか"].pp};
+    });
+  }
   team.forEach(m=>registerSeen(m.name));
   resetBattleMon(state.mons[idx]); team.forEach(resetBattleMon);
   const logs=[`${def.name}が勝負をしかけてきた！ ${team[0].name}が出てきた！`];
@@ -4259,7 +4408,8 @@ function renderBattle(){
   const eStatus=e.status?`<span class="statusAilment">${e.status}</span>`:"";
   const pStatus=p.status?`<span class="statusAilment">${p.status}</span>`:"";
   $("enemyBattleCard").innerHTML=`${trainer}${doubleNote}<b>${b.kind==="wild"?"野生の ":""}${e.name}</b>　Lv.${e.level} ${eStatus}<div>${eTypes}</div><div class="abilityTag">特性:${e.ability}</div><div class="heldTag">持ち物:${e.held}</div><div>HP ${e.hp}/${e.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${ePct}%"></div></div>`;
-  $("playerBattleCard").innerHTML=`<b>${p.name}</b>　Lv.${p.level} ${pStatus}<div>${pTypes}</div><div class="abilityTag">特性:${p.ability}</div><div class="heldTag">持ち物:${p.held}</div><div>HP ${p.hp}/${p.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${pPct}%"></div></div>`;
+  const expNeed=expToNext(p), expPct=Math.max(0,Math.min(100,Math.round((p.exp/expNeed)*100)));
+  $("playerBattleCard").innerHTML=`<b>${p.name}</b>　Lv.${p.level} ${pStatus}<div>${pTypes}</div><div class="abilityTag">特性:${p.ability}</div><div class="heldTag">持ち物:${p.held}</div><div>HP ${p.hp}/${p.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${pPct}%"></div></div><div class="partyMini">EXP ${p.exp}/${expNeed}</div><div class="expOuter"><div class="expInner" style="width:${expPct}%"></div></div>`;
   $("battleLog").textContent=b.log||"";
   $("ballBtn").disabled=b.kind==="trainer";
   $("runBtn").disabled=b.kind==="trainer";
@@ -4330,7 +4480,7 @@ function resolveEndOfTurn(){
 function performRound(playerMoveName){
   const b=state.battle,p=activeMon(); if(!b||!p)return;
   const enemyMove=chooseEnemyMove(b.enemy,p);
-  const pPrio=priorityRoll(p), ePrio=priorityRoll(b.enemy);
+  const pPrio=priorityRoll(p,playerMoveName), ePrio=priorityRoll(b.enemy,enemyMove);
   const firstPlayer=pPrio>=ePrio;
   const logs=[];
   const doPlayer=()=>{ if(p.hp>0 && b.enemy.hp>0) executeMove(p,b.enemy,playerMoveName,logs,true); };
@@ -4388,11 +4538,17 @@ function onEnemyDefeated(){
     renderBattle(); return;
   }
   if(b.kind==="trainer" && b.enemyIndex < b.enemyTeam.length-1){
-    b.enemyIndex++;
-    // double battle starts with enemyTeam[1] already assigned as enemy2, so skip duplicate if needed
-    if(b.double && b.enemyIndex===1) b.enemyIndex++;
-    if(b.enemyIndex>=b.enemyTeam.length){ b.enemyIndex=b.enemyTeam.length-1; }
-    b.enemy=b.enemyTeam[b.enemyIndex];
+    if(b.double && b.enemyTeam.length===2 && b.enemy2){
+      b.enemyIndex=1;
+      b.enemy=b.enemy2;
+      b.enemy2=null;
+    }else{
+      b.enemyIndex++;
+      // double battle starts with enemyTeam[1] already assigned as enemy2, so skip duplicate if needed
+      if(b.double && b.enemyIndex===1) b.enemyIndex++;
+      if(b.enemyIndex>=b.enemyTeam.length){ b.enemyIndex=b.enemyTeam.length-1; }
+      b.enemy=b.enemyTeam[b.enemyIndex];
+    }
     resetBattleMon(b.enemy);
     const logs=[`${b.enemy.name}を倒した！ EXP ${xp}${levels?` / Lv.${p.level}に上がった！`:""} ${levelExtra}。 ${b.trainerName}は${b.enemy.name}を繰り出した！`];
     applyEntryAbility(b.enemy,p,logs);
@@ -4405,6 +4561,16 @@ function onEnemyDefeated(){
     if(b.flag) state.flags[b.flag]=true;
     const finishedFlag=b.flag;
     b.log=`${b.trainerName}との勝負に勝った！ ₽${b.reward}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
+    setTimeout(()=>completeTrainerProgress(finishedFlag),900);
+    if(["nagaraGymTrainer1","nagaraGymTrainer2","nagaraGymTrainer3"].includes(finishedFlag)){
+      setTimeout(()=>{
+        if(state.flags.nagaraGymTrainer1 && state.flags.nagaraGymTrainer2 && state.flags.nagaraGymTrainer3 && !state.flags.nagaraGymCleared){
+          state.flags.nagaraGymCleared=true;
+          showEventBanner("ガンジへの挑戦権を獲得！",1200);
+          say("ジムスタッフ","3人のジムトレーナーを全員突破した！ ガンジに挑戦できる！");
+        }
+      },950);
+    }
     setTimeout(()=>{
       if(finishedFlag==="ruinsBattle"){
         runCutscene("guardian_aftermath",[
@@ -4600,13 +4766,13 @@ function renderMap(){
   }
   renderPlayer();
   setTimeout(()=>{
-    if(state.map==="hikari" && state.flags.gym7 && !state.cutsceneSeen.hikari_hq_alert){
+    if(state.map==="hikari" && state.flags.strategyMeeting && !state.cutsceneSeen.hikari_hq_alert){
       runCutscene("hikari_hq_alert",[
         {banner:"緊急連絡",duration:850},
         {speaker:"レント",text:"スプレマ団の本拠地がヒカリシティ地下にあると判明した。"},
         {speaker:"ミオ",text:"博士も準備してる！ 今度こそ止めよう！"}
       ]);
-    }else if(state.map==="yunohana" && state.flags.valdBoss && !state.cutsceneSeen.yunohana_aftermath){
+    }else if(state.map==="yunohana" && state.flags.eldTruth && !state.cutsceneSeen.yunohana_aftermath){
       runCutscene("yunohana_aftermath",[
         {speaker:"語り",text:"ユノハナの空は静けさを取り戻した。"},
         {speaker:"親友",text:"……全部終わったんだね。"},
@@ -4669,10 +4835,17 @@ function move(dx,dy,dir){
     renderMap(); say("移動",ex.msg);
     return;
   }
-  if(ch==="G" && Math.random()<0.16 && !state.battle){
-    const wild=randomWild();
-    say("草むら","野生の"+wild+"が飛び出してきた！");
-    startWildBattle(wild);
+  if(ch==="G" && !state.battle){
+    state.grassSteps=(state.grassSteps||0)+1;
+    const encounter = Math.random()<0.22 || state.grassSteps>=6;
+    if(encounter){
+      state.grassSteps=0;
+      const wild=randomWild();
+      say("草むら","野生の"+wild+"が飛び出してきた！");
+      startWildBattle(wild);
+    }
+  }else if(ch!=="G"){
+    state.grassSteps=0;
   }
 }
 function frontPos(){
@@ -4683,6 +4856,18 @@ function action(){
   const [fx,fy]=frontPos();
   const n=npcAt(fx,fy);
   if(n){
+    if(n.flag==="gym1" && !state.flags.gym1){
+      const cleared=state.flags.nagaraGymTrainer1 && state.flags.nagaraGymTrainer2 && state.flags.nagaraGymTrainer3;
+      if(!cleared){
+        const left=[
+          !state.flags.nagaraGymTrainer1?"タクミ":null,
+          !state.flags.nagaraGymTrainer2?"ユウナ":null,
+          !state.flags.nagaraGymTrainer3?"ゴウ":null
+        ].filter(Boolean);
+        say("ガンジ",`俺と戦う前に、ジムトレーナー全員を突破してこい！ 残り：${left.join("・")}`);
+        return;
+      }
+    }
     if(n.flag==="ruinsBattle" && !state.flags.ruinsBattle){
       runCutscene("hida_guardian_capture",[
         {effect:"shake"},{speaker:"ミレイ",text:"ここから先は行かせないよ！ ボスの邪魔はさせない！"},
@@ -4711,7 +4896,7 @@ function action(){
       }
     } else if(n.flag==="gym1"){
       if(!state.flags.gym1){
-        state.flags.gym1=true; state.badges=Math.max(state.badges, 1); state.tms["わざマシン01"]=(state.tms["わざマシン01"]||0)+1; badgeCutscene(1,"ガンジ","ロックバッジ");
+        state.flags.gym1=true; completeTrainerProgress("gym1");
         say("ガンジ","イシツブテ、ノズパス、そしてプテラ！ ……見事だ！ ストーンバッジを受け取れ！　第1ジムを突破した！ わざマシン01（いわおとし）をもらった！");
       } else {
         say("ガンジ","次はキソ方面だな！ もっと強くなって戻ってこい！");
@@ -4725,7 +4910,7 @@ function action(){
       }
     } else if(n.flag==="gym2"){
       if(!state.flags.gym2){
-        state.flags.gym2=true; state.badges=Math.max(state.badges, 2); state.tms["わざマシン02"]=(state.tms["わざマシン02"]||0)+1; badgeCutscene(2,"スズネ","ウイングバッジ");
+        state.flags.gym2=true; completeTrainerProgress("gym2");
         say("スズネ","ムックル、キャモメ、そしてチルタリス。……いい風だったね。第2バッジをどうぞ！　第2ジムを突破した！ わざマシン02（みずのはどう）をもらった！");
       } else {
         say("スズネ","またいつでも、風を感じに来てくださいね。");
@@ -4741,7 +4926,7 @@ function action(){
       }
     } else if(n.flag==="gym3"){
       if(!state.flags.gym3){
-        state.flags.gym3=true; state.badges=Math.max(state.badges, 3); badgeCutscene(3,"ゲンゾウ","アースバッジ");
+        state.flags.gym3=true; completeTrainerProgress("gym3");
         if(state.flags.gym4) state.flags.bothMidGyms=true;
         say("ゲンゾウ","サンド、カラカラ、ドオー！ ……やるじゃねえか。第3バッジを持っていけ！");
       } else {
@@ -4756,7 +4941,7 @@ function action(){
       }
     } else if(n.flag==="gym4"){
       if(!state.flags.gym4){
-        state.flags.gym4=true; state.badges=Math.max(state.badges, 4); badgeCutscene(4,"レイカ","ポイズンバッジ");
+        state.flags.gym4=true; completeTrainerProgress("gym4");
         if(state.flags.gym3) state.flags.bothMidGyms=true;
         say("レイカ","ロゼリア、スカタンク、オオニューラ。……少しは見直したわ。第4バッジよ。");
       } else {
@@ -4792,7 +4977,7 @@ function action(){
       }
     } else if(n.flag==="gym5"){
       if(!state.flags.gym5){
-        state.flags.gym5=true; state.badges=Math.max(state.badges, 5); badgeCutscene(5,"カイト","タイドバッジ");
+        state.flags.gym5=true; completeTrainerProgress("gym5");
         say("カイト","ペリッパー、ランターン、カマスジョー、イルカマン！ ……いい勝負だった！ 第5バッジだ。それと、なみのりも使えるようになった！　その直後、飛騨方面に巨大な結界が発生した。ヒカリシティへ戻ろう！");
       } else {
         say("カイト","北部の異常が気になる。ヒカリで情報を集めよう。");
@@ -4822,7 +5007,7 @@ function action(){
       }
     } else if(n.flag==="gym6"){
       if(!state.flags.gym6){
-        state.flags.gym6=true; state.badges=Math.max(state.badges, 6); state.tms["わざマシン03"]=(state.tms["わざマシン03"]||0)+1; badgeCutscene(6,"テツジ","スチールバッジ");
+        state.flags.gym6=true; completeTrainerProgress("gym6");
         say("テツジ","トリデプス、ドータクン、デカヌチャン、ハッサム！ いいねえ！ 第6バッジを持っていけ！ わざマシン03（メタルクロー）をもらった！");
       } else {
         say("テツジ","まだまだ鍛えられるぞ！ また来い！");
@@ -4843,7 +5028,7 @@ function action(){
       }
     } else if(n.flag==="gym7"){
       if(!state.flags.gym7){
-        state.flags.gym7=true; state.badges=Math.max(state.badges, 7); state.tms["わざマシン04"]=(state.tms["わざマシン04"]||0)+1; badgeCutscene(7,"セリナ","スノーバッジ");
+        state.flags.gym7=true; completeTrainerProgress("gym7");
         say("セリナ","ユキノオー、マンムー、モスノウ、ユキメノコ。素敵な勝負でした。第7バッジをどうぞ。 わざマシン04（ドレインキッス）をもらった！ユキナギへ戻ってくださいませ。");
       } else {
         say("セリナ","また雪の季節にお会いしましょう。");
@@ -4910,6 +5095,7 @@ function action(){
       if(!state.flags.eldTruth){
         state.flags.eldTruth=true;
         say("エルド","王がお前をさらい、俺が売ったと嘘をついた。俺はずっと探していた。……千年以上続いた誤解が、ようやく解けた。");
+        setTimeout(()=>legendaryCutscene(),350);
       }
     } else if(n.flag==="friendFinal"){
       if(!state.flags.friendFinal){
@@ -4918,7 +5104,7 @@ function action(){
       }
     } else if(n.flag==="gym8"){
       if(!state.flags.gym8){
-        state.flags.gym8=true; state.badges=Math.max(state.badges, 8); badgeCutscene(8,"レント","ボルトバッジ");
+        state.flags.gym8=true; completeTrainerProgress("gym8");
         say("レント","タイカイデン、ジバコイル、シビルドン、ハラバリー、対策枠、ゼラオラ。……見事だ。これで8つ全部だ。チャンピオンロードへ進め！");
       }
     } else if(n.flag==="route19Battle"){
@@ -5099,8 +5285,8 @@ function action(){
       }
     } else if(n.flag==="mountainItem"){
       if(!state.flags.mountainItem){
-        state.flags.mountainItem=true;
-        say("道具","岩陰から、とくせいパッチを見つけた！");
+        state.flags.mountainItem=true; addItem("とくせいパッチ",1);
+        say("道具","岩陰から、とくせいパッチを見つけた！ バッグに入れた。");
       } else {
         say("岩陰","もう何もない。");
       }
@@ -5189,7 +5375,7 @@ function action(){
         say("境界の祭壇","異なる世界をつなぐ力の余韻が残っている。");
       }
     } else if(n.flag==="momGift"){
-      if(!state.flags.momGift){ state.flags.momGift=true; say("お母さん","旅立ちのお守りにキズぐすりを3個くれた！"); }
+      if(!state.flags.momGift){ state.flags.momGift=true; addItem("キズぐすり",3); say("お母さん","旅立ちのお守りにキズぐすりを3個くれた！ バッグに入れた。"); }
       else say("お母さん","困ったらいつでも帰っておいで。");
     } else if(n.flag==="yahagiBerry"){
       if(!state.flags.yahagiBerry){ state.flags.yahagiBerry=true; say("散歩中の女性","オレンのみを1個もらった！"); }
@@ -5213,53 +5399,53 @@ function action(){
         state.flags.sasanoQuest=true;
         say("織物職人","黒服のせいで山側の材料が届かないんだ。あいつらを追い払ってくれたら、お礼に丈夫な布を渡すよ。");
       } else if(state.flags.grunt1){
-        say("織物職人","助かったよ！ 『丈夫な布』をもらった。防寒具の素材になりそうだ。");
+        if(grantItemOnce("sasanoQuestReward","丈夫な布",1)) say("織物職人","助かったよ！ 『丈夫な布』をもらった。バッグに入れた。"); else say("織物職人","材料も無事届くようになったよ。");
       } else {
         say("織物職人","黒服が町の中央にいる。気をつけて。");
       }
     } else if(n.flag==="route3Trainer"){
       if(!state.flags.route3Trainer){ state.flags.route3Trainer=true; say("スクールボーイ","勝負！ ……負けた！ ガンジさんならもっと強いよ！"); }
     } else if(n.flag==="route3HiddenItem"){
-      if(!state.flags.route3HiddenItem){ state.flags.route3HiddenItem=true; say("光る地面","どくけしを1個見つけた！"); }
+      if(!state.flags.route3HiddenItem){ state.flags.route3HiddenItem=true; addItem("どくけし",1); say("光る地面","どくけしを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="nagaraStoneQuest"){
       if(!state.flags.nagaraStoneQuest){
         state.flags.nagaraStoneQuest=true;
         say("石工","ナガラじょうに青白く光る珍しい石があるらしい。見つけたら教えてくれ。");
       } else if(state.flags.nagaraRareStone){
-        say("石工","それだ！ 見せてくれてありがとう。お礼に『かたいいし』をくれた！");
+        if(grantItemOnce("nagaraStoneReward","かたいいし",1)) say("石工","それだ！ 見せてくれてありがとう。お礼に『かたいいし』をくれた！ バッグに入れた。"); else say("石工","あの石はいい資料になったよ。");
       } else {
         say("石工","ナガラじょうの石垣をよく調べてみてくれ。");
       }
     } else if(n.flag==="nagaraRareStone"){
-      if(!state.flags.nagaraRareStone){ state.flags.nagaraRareStone=true; say("珍しい石","青白く光る石を見つけた！ 石工に見せてみよう。"); }
+      if(!state.flags.nagaraRareStone){ state.flags.nagaraRareStone=true; addItem("青白く光る石",1); say("珍しい石","青白く光る石を見つけた！ バッグに入れた。石工に見せてみよう。"); }
     } else if(n.flag==="kisoWoodQuest"){
       if(!state.flags.kisoWoodQuest){
         state.flags.kisoWoodQuest=true;
         say("林業の人","山小屋の薪が足りないんだ。中に積んである乾いた薪を持ってきてくれないか？");
       } else if(state.flags.kisoWood){
-        say("林業の人","助かった！ お礼に『もくたん』をくれた！");
+        if(grantItemOnce("kisoWoodReward","もくたん",1)) say("林業の人","助かった！ お礼に『もくたん』をくれた！ バッグに入れた。"); else say("林業の人","薪は本当に助かったよ。");
       } else {
         say("林業の人","山小屋の中を探してみてくれ。");
       }
     } else if(n.flag==="kisoWood"){
-      if(!state.flags.kisoWood){ state.flags.kisoWood=true; say("薪の束","乾いた薪を少し分けてもらった。林業の人に届けよう。"); }
+      if(!state.flags.kisoWood){ state.flags.kisoWood=true; addItem("乾いた薪",1); say("薪の束","乾いた薪を少し分けてもらった。バッグに入れた。林業の人に届けよう。"); }
     } else if(n.flag==="route5Trainer"){
       if(!state.flags.route5Trainer){ state.flags.route5Trainer=true; say("バードキーパー","勝負！ ……風を読むのが上手いね！"); }
     } else if(n.flag==="route5Feather"){
-      if(!state.flags.route5Feather){ state.flags.route5Feather=true; say("崖際の草むら","きれいなハネを見つけた！"); }
+      if(!state.flags.route5Feather){ state.flags.route5Feather=true; addItem("きれいなハネ",1); say("崖際の草むら","きれいなハネを見つけた！ バッグに入れた。"); }
     } else if(n.flag==="azumiBirdQuest"){
       if(!state.flags.azumiBirdQuest){
         state.flags.azumiBirdQuest=true;
         say("鳥好きの男性","5番道路で珍しい羽根を見つけたら見せてほしいんだ。");
       } else if(state.flags.route5Feather){
-        say("鳥好きの男性","これは渡り鳥の羽根だ！ お礼に『するどいくちばし』をあげるよ。");
+        if(grantItemOnce("azumiBirdReward","するどいくちばし",1)) say("鳥好きの男性","これは渡り鳥の羽根だ！ お礼に『するどいくちばし』をあげるよ。バッグに入れた！"); else say("鳥好きの男性","あの羽根、貴重だったよ。ありがとう。");
       } else {
         say("鳥好きの男性","5番道路の崖際を探してみて。");
       }
     } else if(n.flag==="route6Trainer"){
       if(!state.flags.route6Trainer){ state.flags.route6Trainer=true; say("やまおとこ","いい勝負だった！ センコウの地面ポケモンも手強いぞ。"); }
     } else if(n.flag==="route6Item"){
-      if(!state.flags.route6Item){ state.flags.route6Item=true; say("岩陰","いいキズぐすりを1個拾った！"); }
+      if(!state.flags.route6Item){ state.flags.route6Item=true; addItem("いいキズぐすり",1); say("岩陰","いいキズぐすりを1個拾った！ バッグに入れた。"); }
     } else if(n.flag==="route7Trainer"){
       if(!state.flags.route7Trainer){ state.flags.route7Trainer=true; say("つりびと","勝負！ ……湖のポケモンも負けちゃったか！"); }
     } else if(n.flag==="route7Item"){
@@ -5269,7 +5455,7 @@ function action(){
         state.flags.senkouMineQuest=true;
         say("鉱山作業員","果樹園で落ちたリンゴを一つ取ってきてくれないか？ 作業の休憩で食べたいんだ。");
       } else if(state.flags.senkouApple){
-        say("鉱山作業員","助かった！ お礼に『やわらかいすな』をくれた！");
+        if(grantItemOnce("senkouMineReward","やわらかいすな",1)) say("鉱山作業員","助かった！ お礼に『やわらかいすな』をくれた！ バッグに入れた。"); else say("鉱山作業員","あのリンゴ、うまかったぞ！");
       } else {
         say("鉱山作業員","金のリンゴじゃなくて普通のリンゴでいいぞ。");
       }
@@ -5280,12 +5466,12 @@ function action(){
         state.flags.tsuruneHerbQuest=true;
         say("果樹園の女性","果樹園の奥に薬草が生えてるの。薬草師に渡す分を取ってきてくれない？");
       } else if(state.flags.tsuruneHerb){
-        say("果樹園の女性","ありがとう！ お礼に『どくバリ』をくれた！");
+        if(grantItemOnce("tsuruneHerbReward","どくバリ",1)) say("果樹園の女性","ありがとう！ お礼に『どくバリ』をくれた！ バッグに入れた。"); else say("果樹園の女性","薬草、助かったわ。");
       } else {
         say("果樹園の女性","果樹園の奥を探してみて。");
       }
     } else if(n.flag==="tsuruneHerb"){
-      if(!state.flags.tsuruneHerb){ state.flags.tsuruneHerb=true; say("薬草","香りの強い薬草を採取した！"); }
+      if(!state.flags.tsuruneHerb){ state.flags.tsuruneHerb=true; addItem("香りの強い薬草",1); say("薬草","香りの強い薬草を採取した！ バッグに入れた。"); }
     } else if(n.flag==="route8Trainer"){
       if(!state.flags.route8Trainer){ state.flags.route8Trainer=true; say("レンジャー","いい戦いだった！ テンリュウの古い伝承もぜひ聞いていってくれ。"); }
     } else if(n.flag==="route8Stone"){
@@ -5295,7 +5481,7 @@ function action(){
         state.flags.tenryuLoreQuest=true;
         say("郷土史家","資料室にある『破れた記録』を見てきてくれないか。名前の部分が削られているんだ。");
       } else if(state.flags.tenryuArchiveClue){
-        say("郷土史家","やはり人名だけが意図的に消されている……。お礼に『ふしぎなアメ』をあげよう。");
+        if(grantItemOnce("tenryuLoreReward","ふしぎなアメ",1)) say("郷土史家","やはり人名だけが意図的に消されている……。お礼に『ふしぎなアメ』をあげよう。バッグに入れた。"); else say("郷土史家","記録の謎はまだ残っているな。");
       } else {
         say("郷土史家","郷土資料室の奥を調べてみてくれ。");
       }
@@ -5304,44 +5490,44 @@ function action(){
     } else if(n.flag==="route9Trainer"){
       if(!state.flags.route9Trainer){ state.flags.route9Trainer=true; say("バードキーパー","海風の中でも安定してるね！ シオナギでも頑張って！"); }
     } else if(n.flag==="route9Item"){
-      if(!state.flags.route9Item){ state.flags.route9Item=true; say("漂着物","すごいキズぐすりを1個見つけた！"); }
+      if(!state.flags.route9Item){ state.flags.route9Item=true; addItem("すごいキズぐすり",1); say("漂着物","すごいキズぐすりを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="shioFishingQuest"){
       if(!state.flags.shioFishingQuest){
         state.flags.shioFishingQuest=true;
         say("漁師","港で珍しい貝殻を見つけたら持ってきてくれ。最近の潮の流れを調べたいんだ。");
       } else if(state.flags.shioShell){
-        say("漁師","この貝殻、沖の深い場所から流れてきたみたいだ。お礼に『しんぴのしずく』をやるよ。");
+        if(grantItemOnce("shioFishingReward","しんぴのしずく",1)) say("漁師","この貝殻、沖の深い場所から流れてきたみたいだ。お礼に『しんぴのしずく』をやるよ。バッグに入れた。"); else say("漁師","あの貝殻は調査に役立ったよ。");
       } else {
         say("漁師","港の端や流木を探してみてくれ。");
       }
     } else if(n.flag==="shioShell"){
-      if(!state.flags.shioShell){ state.flags.shioShell=true; say("流木","珍しい貝殻を見つけた！ 漁師に見せてみよう。"); }
+      if(!state.flags.shioShell){ state.flags.shioShell=true; addItem("珍しい貝殻",1); say("流木","珍しい貝殻を見つけた！ バッグに入れた。漁師に見せてみよう。"); }
     } else if(n.flag==="route10Trainer"){
       if(!state.flags.route10Trainer){ state.flags.route10Trainer=true; say("バックパッカー","強いな！ ユノハナは温泉だけじゃなく地熱もすごいぞ。"); }
     } else if(n.flag==="route10Item"){
-      if(!state.flags.route10Item){ state.flags.route10Item=true; say("地熱の割れ目","あついいわを1個見つけた！"); }
+      if(!state.flags.route10Item){ state.flags.route10Item=true; addItem("あついいわ",1); say("地熱の割れ目","あついいわを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="yunoInnQuest"){
       if(!state.flags.yunoInnQuest){
         state.flags.yunoInnQuest=true;
         say("旅館の主人","旅館のタオルを共同温泉に持っていかれたままなんです。見つけたら戻してもらえますか？");
       } else if(state.flags.yunoTowel){
-        say("旅館の主人","助かりました！ お礼に『おおきなマラサダ』……ではなく、温泉まんじゅうをどうぞ！");
+        if(grantItemOnce("yunoInnReward","温泉まんじゅう",1)) say("旅館の主人","助かりました！ お礼に温泉まんじゅうをどうぞ！ バッグに入れた。"); else say("旅館の主人","タオル、ありがとうございました。");
       } else {
         say("旅館の主人","共同温泉か客室にあると思うんですが……。");
       }
     } else if(n.flag==="yunoTowel"){
-      if(!state.flags.yunoTowel){ state.flags.yunoTowel=true; say("忘れ物","旅館名入りのタオルを見つけた。主人に返そう。"); }
+      if(!state.flags.yunoTowel){ state.flags.yunoTowel=true; addItem("旅館のタオル",1); say("忘れ物","旅館名入りのタオルを見つけた。バッグに入れた。主人に返そう。"); }
     } else if(n.flag==="yuragiSupplyQuest"){
       if(!state.flags.yuragiSupplyQuest){
         state.flags.yuragiSupplyQuest=true;
         say("登山案内人","ロッジの補給箱から非常食を一つ持ってきてくれ。飛騨越えの前に確認しておきたい。");
       } else if(state.flags.yuragiSupply){
-        say("登山案内人","助かった。お礼に『げんきのかけら』を渡そう。");
+        if(grantItemOnce("yuragiSupplyReward","げんきのかけら",1)) say("登山案内人","助かった。お礼に『げんきのかけら』を渡そう。バッグに入れた。"); else say("登山案内人","補給確認はばっちりだ。");
       } else {
         say("登山案内人","ロッジの補給箱を見てきてくれ。");
       }
     } else if(n.flag==="yuragiSupply"){
-      if(!state.flags.yuragiSupply){ state.flags.yuragiSupply=true; say("補給箱","非常食を1つ取り出した。登山案内人に届けよう。"); }
+      if(!state.flags.yuragiSupply){ state.flags.yuragiSupply=true; addItem("非常食",1); say("補給箱","非常食を1つ取り出した。バッグに入れた。登山案内人に届けよう。"); }
     } else if(n.flag==="miyamaPhotoQuest"){
       if(!state.flags.miyamaPhotoQuest){
         state.flags.miyamaPhotoQuest=true;
@@ -5358,7 +5544,7 @@ function action(){
         state.flags.yukinagiFishQuest=true;
         say("漁師","港の網に何か珍しいものが引っかかってないか見てきてくれ。最近海がおかしいんだ。");
       } else if(state.flags.yukinagiIce){
-        say("漁師","こんな氷、海じゃ普通はできない。お礼に『とけないこおり』をやるよ。");
+        if(grantItemOnce("yukinagiFishReward","とけないこおり",1)) say("漁師","こんな氷、海じゃ普通はできない。お礼に『とけないこおり』をやるよ。バッグに入れた。"); else say("漁師","あの氷は今も調べてるよ。");
       } else {
         say("漁師","港の網を調べてみてくれ。");
       }
@@ -5369,22 +5555,22 @@ function action(){
         state.flags.tsubakiForgeQuest=true;
         say("工房の職人","工房で使える金属片があったら持ってきてくれないか？");
       } else if(state.flags.tsubakiMetal){
-        say("工房の職人","助かった！ お礼に『メタルコート』を渡そう。");
+        if(grantItemOnce("tsubakiForgeReward","メタルコート",1)) say("工房の職人","助かった！ お礼に『メタルコート』を渡そう。バッグに入れた。"); else say("工房の職人","いい金属片だったよ。");
       } else {
         say("工房の職人","工房の床もよく見てみてくれ。");
       }
     } else if(n.flag==="tsubakiMetal"){
-      if(!state.flags.tsubakiMetal){ state.flags.tsubakiMetal=true; say("金属片","使えそうな金属片を拾った！"); }
+      if(!state.flags.tsubakiMetal){ state.flags.tsubakiMetal=true; addItem("金属片",1); say("金属片","使えそうな金属片を拾った！ バッグに入れた。"); }
     } else if(n.flag==="route17Trainer"){
       if(!state.flags.route17Trainer){ state.flags.route17Trainer=true; say("発掘作業員","勝負！ ……強いな。セキソウでも面白い発見があるぞ。"); }
     } else if(n.flag==="route17Item"){
-      if(!state.flags.route17Item){ state.flags.route17Item=true; say("古い採掘跡","かたいいしを1個見つけた！"); }
+      if(!state.flags.route17Item){ state.flags.route17Item=true; addItem("かたいいし",1); say("古い採掘跡","かたいいしを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="sekisouResearchQuest"){
       if(!state.flags.sekisouResearchQuest){
         state.flags.sekisouResearchQuest=true;
         say("学芸員","発掘研究所で見つかった石板を確認してきてもらえますか？");
       } else if(state.flags.sekisouTablet){
-        say("学芸員","やはり守護者と人間が共に暮らしていた記録ですね。お礼に『ふしぎなアメ』をどうぞ。");
+        if(grantItemOnce("sekisouResearchReward","ふしぎなアメ",1)) say("学芸員","やはり守護者と人間が共に暮らしていた記録ですね。お礼に『ふしぎなアメ』をどうぞ。バッグに入れた。"); else say("学芸員","貴重な調査協力でした。");
       } else {
         say("学芸員","発掘研究所の石板を見てきてください。");
       }
@@ -5393,26 +5579,26 @@ function action(){
     } else if(n.flag==="route18Trainer"){
       if(!state.flags.route18Trainer){ state.flags.route18Trainer=true; say("スキーヤー","吹雪の中でも安定してるね！ セツゲツはもうすぐだよ。"); }
     } else if(n.flag==="route18Item"){
-      if(!state.flags.route18Item){ state.flags.route18Item=true; say("雪だまり","こおりのいしを1個見つけた！"); }
+      if(!state.flags.route18Item){ state.flags.route18Item=true; addItem("こおりのいし",1); say("雪だまり","こおりのいしを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="setsugetsuHouseQuest"){
       if(!state.flags.setsugetsuHouseQuest){
         state.flags.setsugetsuHouseQuest=true;
         say("屋敷の使用人","屋敷の飾り棚にある氷細工を見てきてください。セリナ様の趣味が分かると思います。");
       } else if(state.flags.setsugetsuIceArt){
-        say("屋敷の使用人","きれいでしょう？ お礼に『とけないこおり』をどうぞ。");
+        if(grantItemOnce("setsugetsuHouseReward","とけないこおり",1)) say("屋敷の使用人","きれいでしょう？ お礼に『とけないこおり』をどうぞ。バッグに入れた。"); else say("屋敷の使用人","セリナ様の趣味も分かっていただけましたね。");
       } else {
         say("屋敷の使用人","屋敷の中の飾り棚です。");
       }
     } else if(n.flag==="setsugetsuIceArt"){
       if(!state.flags.setsugetsuIceArt){ state.flags.setsugetsuIceArt=true; say("氷細工","ユキメノコを模した精巧な氷細工だ。"); }
     } else if(n.flag==="route19Item"){
-      if(!state.flags.route19Item){ state.flags.route19Item=true; say("草むらの荷物","かいふくのくすりを1個見つけた！"); }
+      if(!state.flags.route19Item){ state.flags.route19Item=true; addItem("かいふくのくすり",1); say("草むらの荷物","かいふくのくすりを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="suimonLodgeQuest"){
       if(!state.flags.suimonLodgeQuest){
         state.flags.suimonLodgeQuest=true;
         say("宿屋の主人","宿帳を見ていくといい。ここを通った挑戦者たちの歴史が分かるよ。");
       } else if(state.flags.suimonGuestbook){
-        say("宿屋の主人","旅を振り返れたかい？ お礼に『ピーピーエイダー』をあげよう。");
+        if(grantItemOnce("suimonLodgeReward","ピーピーエイダー",1)) say("宿屋の主人","旅を振り返れたかい？ お礼に『ピーピーエイダー』をあげよう。バッグに入れた。"); else say("宿屋の主人","また泊まりに来ておくれ。");
       } else {
         say("宿屋の主人","宿屋の奥に宿帳があるよ。");
       }
@@ -5421,22 +5607,22 @@ function action(){
     } else if(n.flag==="route20Trainer"){
       if(!state.flags.route20Trainer){ state.flags.route20Trainer=true; say("リーグ挑戦者","いい勝負だった。次はリーグ本戦で会えるといいな。"); }
     } else if(n.flag==="route20Item"){
-      if(!state.flags.route20Item){ state.flags.route20Item=true; say("岩陰","げんきのかたまりを1個見つけた！"); }
+      if(!state.flags.route20Item){ state.flags.route20Item=true; addItem("げんきのかたまり",1); say("岩陰","げんきのかたまりを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="sekiganePrep"){
       if(!state.flags.sekiganePrep){ state.flags.sekiganePrep=true; say("リーグ職員","チャンピオンロードの地図情報を更新しました。準備を整えて進んでください。"); }
     } else if(n.flag==="postMomGift"){
-      if(!state.flags.postMomGift){ state.flags.postMomGift=true; say("お母さん","チャンピオン就任のお祝いに『げんきのかたまり』を2個もらった！"); }
+      if(!state.flags.postMomGift){ state.flags.postMomGift=true; addItem("げんきのかたまり",2); say("お母さん","チャンピオン就任のお祝いに『げんきのかたまり』を2個もらった！ バッグに入れた。"); }
       else say("お母さん","どれだけ強くなっても、帰ってくる場所はここだからね。");
     } else if(n.flag==="lostIslandTablet"){
       if(!state.flags.lostIslandTablet){ state.flags.lostIslandTablet=true; say("古い石碑","『一つの心が二つに裂けるより前、もう一つの小さな光があった。』記録した。"); }
     } else if(n.flag==="lostIslandItem"){
-      if(!state.flags.lostIslandItem){ state.flags.lostIslandItem=true; say("漂着した箱","ふしぎなアメを1個見つけた！"); }
+      if(!state.flags.lostIslandItem){ state.flags.lostIslandItem=true; addItem("ふしぎなアメ",1); say("漂着した箱","ふしぎなアメを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="tideItem"){
-      if(!state.flags.tideItem){ state.flags.tideItem=true; say("海底の箱","しんぴのしずくとダイブボールを見つけた！"); }
+      if(!state.flags.tideItem){ state.flags.tideItem=true; addItem("しんぴのしずく",1); addItem("ダイブボール",1); say("海底の箱","しんぴのしずくとダイブボールを見つけた！ バッグに入れた。"); }
     } else if(n.flag==="snowPostItem"){
-      if(!state.flags.snowPostItem){ state.flags.snowPostItem=true; say("氷結した箱","とけないこおりを1個見つけた！"); }
+      if(!state.flags.snowPostItem){ state.flags.snowPostItem=true; addItem("とけないこおり",1); say("氷結した箱","とけないこおりを1個見つけた！ バッグに入れた。"); }
     } else if(n.flag==="flamePostItem"){
-      if(!state.flags.flamePostItem){ state.flags.flamePostItem=true; say("耐熱ケース","もくたんとほのおのいしを見つけた！"); }
+      if(!state.flags.flamePostItem){ state.flags.flamePostItem=true; addItem("もくたん",1); addItem("ほのおのいし",1); say("耐熱ケース","もくたんとほのおのいしを見つけた！ バッグに入れた。"); }
     } else if(n.flag==="shop"){
       openShop();
     } else if(n.flag==="heal"){
@@ -5451,11 +5637,11 @@ function action(){
   say("ガイド","目の前には特に何もない。");
 }
 function save(){
-  localStorage.setItem("alciaMapAlpha27",JSON.stringify(state));
+  localStorage.setItem("alciaMapAlpha31",JSON.stringify(state));
   say("セーブ","現在の冒険を保存した。");
 }
 function load(){
-  const raw=localStorage.getItem("alciaMapAlpha27");
+  const raw=localStorage.getItem("alciaMapAlpha31");
   if(!raw){ say("ロード","セーブデータがない。"); return; }
   try{
     const s=JSON.parse(raw);
