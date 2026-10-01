@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>アルシア地方 α41 最終修正版・完成版1.0候補</title>
+<title>アルシア地方 α42 共同デバッグ修正版</title>
 <style>
 :root{
   --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
@@ -170,7 +170,7 @@ h1{font-size:20px;margin:4px 0 10px}
 </head>
 <body>
 <main>
-  <h1>アルシア地方 α41 最終修正版・完成版1.0候補</h1>
+  <h1>アルシア地方 α42 共同デバッグ修正版</h1>
   <div id="topbar">
     <span id="mapName" class="badge">ヤハギタウン</span>
     <span id="party" class="badge">相棒：未選択</span>
@@ -341,7 +341,7 @@ h1{font-size:20px;margin:4px 0 10px}
   <div class="modalCard">
     <h2>遊び方</h2>
     <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
-    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α41では13番水路で水上エンカウントと視線トレーナーが機能するよう修正し、図鑑に終盤・伝説・四天王関連の追加ポケモンを登録しました。ステルスロックAI、まもる連続成功率、でんじはの無効判定、旧セーブ能力値移行を修正。ボールは自動消費ではなく自分で選択可能になり、「はじめから」と御三家選択時の初期セーブも安全化しました。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α42共同デバッグ版では、最初の親友戦で技を押しても反応しない重大バグを修正しました。AI評価関数の未定義変数を除去し、戦闘中の連打防止も追加。アズミ南口の重複出口、13番水路の通路封鎖、御三家未選択セーブの復帰、ガチライバル第1戦の第2バッジ条件を修正しました。さらにジム撃破後の次目的地案内と、親友・ライバルなど重要戦の勝利後会話を復活させています。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
     <button id="closeHelp" class="menuBtn">閉じる</button>
   </div>
 </div>
@@ -1412,8 +1412,8 @@ const maps = {
     rows:["TTTTTETTTTTT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TWWWWPWWWWWT","TTTTTETTTTTT"],
     start:{x:5,y:1},
     npcs:[
-      {x:5,y:4,name:"つりびと",text:"こんな水路で会うなんてな！ 一勝負しよう！",flag:"route13TrainerA"},
-      {x:5,y:7,name:"かいパンやろう",text:"流れに乗るだけじゃダメだ。ポケモン勝負もな！",flag:"route13TrainerB"}
+      {x:4,y:4,name:"つりびと",text:"こんな水路で会うなんてな！ 一勝負しよう！",flag:"route13TrainerA"},
+      {x:6,y:7,name:"かいパンやろう",text:"流れに乗るだけじゃダメだ。ポケモン勝負もな！",flag:"route13TrainerB"}
     ],
     exits:[
       {x:5,y:0,to:"kawamichi",tx:5,ty:7,msg:"北へ戻り、カワミチタウンへ着いた。"},
@@ -4787,7 +4787,6 @@ function struggle(mon){
 
 function moveScoreAI(mon,player,name){
   const mv=MOVES[name]; if(!mv) return -999;
-  if(!mv.protect) user.protectCount=0;
   if(mv.category==="変化"){
     if(mv.protect) return (mon.protectCount||0)>0 ? 3 : (mon.hp<mon.maxHp*.35 ? 34 : 7);
     if(mv.trickRoom) return state.battle?.trickRoomTurns?2:(effectiveSpe(mon)<effectiveSpe(player)?48:10);
@@ -4826,6 +4825,24 @@ function recountBadges(){
     .reduce((n,k)=>n+(state.flags[k]?1:0),0);
   return state.badges;
 }
+
+function postBattleStory(flag){
+  const data={
+    friend1:["親友","最初の勝負、楽しかった！ ヒカリシティまで一緒に頑張ろう。"],
+    friend2:["親友","相性だけじゃ勝負は決まらないね！ 次はアズミシティを目指そう！"],
+    rival1:["ガチライバル","タイプ相性で有利な御三家を選んだ。それでも負けたか……。西のセンコウ、東のツルネ、好きな方から行け。"],
+    rival2:["ガチライバル","……また負けたか。南のテンリュウ方面へ行け。"],
+    friend3:["親友","やっぱり強いね。次はシオナギシティだ！"],
+    rival3:["ガチライバル","強くなったのは認める。博物館で気になる展示がある。"],
+    rivalFinal:["ガチライバル","才能は大事だ。今でもそう思う。……でも、それだけじゃ説明できない強さがあるらしい。"],
+    hqGrunts:["スプレマ団したっぱ","くそっ、突破された！ この先にセルマ様がいる！"],
+    mireiFinal:["ミレイ","負けちゃった……。でも、ボスの邪魔はさせたくなかったんだけどな。"],
+    rozaFinal:["ロザ","くっ……でも外にはボスがいるわよ！"]
+  }[flag];
+  if(!data) return;
+  setTimeout(()=>say(data[0],data[1]),1150);
+}
+
 function completeTrainerProgress(flag){
   if(!flag) return;
   const rewardKey="rewarded_"+flag;
@@ -4919,7 +4936,7 @@ function startWildBattle(name){
   resetBattleMon(mon); resetBattleMon(enemy);
   const logs=[`野生の${enemy.name}が飛び出してきた！`];
   applyEntryAbility(mon,enemy,logs); applyEntryAbility(enemy,mon,logs);
-  state.battle={kind:"wild",enemy,enemyTeam:[enemy],enemyIndex:0,trainerName:null,reward:0,flag:null,trickRoomTurns:0,playerHazards:{},enemyHazards:{},log:logs.join(" ")};
+  state.battle={kind:"wild",enemy,enemyTeam:[enemy],enemyIndex:0,trainerName:null,reward:0,flag:null,trickRoomTurns:0,playerHazards:{},enemyHazards:{},inputLocked:false,log:logs.join(" ")};
   sfx("encounter"); battleModal.classList.remove("hidden");
   renderBattle();
   renderHUD();
@@ -4978,7 +4995,7 @@ function startTrainerBattle(flag,def){
   applyEntryAbility(state.mons[idx],team[0],logs); applyEntryAbility(team[0],state.mons[idx],logs);
   const allyTeam=(def.ally||[]).map(([name,lv])=>makeMon(name,lv));
   const isDouble=!!def.double && team.length>=2;
-  state.battle={kind:"trainer",double:isDouble,allyTeam,ally:allyTeam[0]||null,enemyTeam:team,enemyIndex:0,enemy:team[0],enemy2:isDouble?team[1]:null,trainerName:def.name,reward:def.reward||0,flag,trickRoomTurns:0,playerHazards:{},enemyHazards:{},log:logs.join(" ")};
+  state.battle={kind:"trainer",double:isDouble,allyTeam,ally:allyTeam[0]||null,enemyTeam:team,enemyIndex:0,enemy:team[0],enemy2:isDouble?team[1]:null,trainerName:def.name,reward:def.reward||0,flag,trickRoomTurns:0,playerHazards:{},enemyHazards:{},inputLocked:false,log:logs.join(" ")};
   sfx("encounter"); battleModal.classList.remove("hidden");
   renderBattle();
 }
@@ -4991,6 +5008,7 @@ function renderMoveButtons(){
     const btn=document.createElement("button"); btn.className="sysBtn moveBtn";
     const pp=name==="わるあがき"?"∞":`${p.pp[name]??0}/${mv.pp}`;
     btn.innerHTML=`${name}<small>${mv.type}・${mv.category||"物理"} / ${mv.category==="変化"?"変化技":`威力 ${mv.power}`} / PP ${pp}</small>`;
+    if(battleModal && state.battle?.inputLocked) btn.disabled=true;
     if(name!=="わるあがき" && (p.pp[name]??0)<=0) btn.disabled=true;
     btn.onclick=()=>playerUseMove(name);
     area.appendChild(btn);
@@ -5078,6 +5096,7 @@ function executeMove(user,target,moveName,logParts,isPlayer){
   const mv=moveName==="わるあがき"?struggle(user):(MOVES[moveName]||MOVES["たいあたり"]);
   if(moveName!=="わるあがき") consumePP(user,moveName,target.ability);
   if(!canAct(user,logParts)) return;
+  if(!mv.protect) user.protectCount=0;
   if(moveName!=="わるあがき" && Math.random()>moveAccuracy(user,mv)){
     logParts.push(`${user.name}の${moveName}！ しかし外れた！`); return;
   }
@@ -5137,6 +5156,7 @@ function resolveEndOfTurn(){
     return;
   }
   if(b.enemy.hp<=0){renderBattle();setTimeout(onEnemyDefeated,250);return;}
+  b.inputLocked=false;
   if(b.kind==="trainer" && b.enemy.hp>0 && b.enemy.hp<=Math.floor(b.enemy.maxHp*.25) && b.enemyIndex < b.enemyTeam.length-1 && Math.random()<.2){
     const next=b.enemyTeam[b.enemyIndex+1];
     b.enemyTeam[b.enemyIndex+1]=b.enemy;
@@ -5226,15 +5246,18 @@ function onEnemyDefeated(){
     const logs=[`${b.enemy.name}を倒した！ EXP ${xp}${levels?` / Lv.${p.level}に上がった！`:""} ${levelExtra}。 ${b.trainerName}は${b.enemy.name}を繰り出した！`];
     applyEntryAbility(b.enemy,p,logs);
     b.log=logs.join(" ");
+    b.inputLocked=false;
     renderBattle();
     return;
   }
   if(b.kind==="trainer"){
-    state.money+=Math.floor(b.reward*(b.kind==="trainer"?0.85:1));
+    const actualReward=Math.floor(b.reward*0.85);
+    state.money+=actualReward;
     if(b.flag) state.flags[b.flag]=true;
     autosave("trainer");
     const finishedFlag=b.flag;
-    b.log=`${b.trainerName}との勝負に勝った！ ₽${b.reward}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
+    postBattleStory(finishedFlag);
+    b.log=`${b.trainerName}との勝負に勝った！ ₽${actualReward}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
     setTimeout(()=>completeTrainerProgress(finishedFlag),900);
     if(["nagaraGymTrainer1","nagaraGymTrainer2","nagaraGymTrainer3"].includes(finishedFlag)){
       setTimeout(()=>{
@@ -5281,8 +5304,9 @@ function onEnemyDefeated(){
   setTimeout(()=>endBattle(true),850);
 }
 function playerUseMove(moveName){
-  const p=activeMon(),b=state.battle; if(!p||!b)return;
+  const p=activeMon(),b=state.battle; if(!p||!b||b.inputLocked)return;
   if(moveName!=="わるあがき" && (p.pp[moveName]??0)<=0){b.log="PPが足りない！";renderBattle();return;}
+  b.inputLocked=true;
   performRound(moveName);
 }
 function ballBonus(name,enemy){
@@ -5470,12 +5494,24 @@ function nextCutsceneStep(){if(activeCutscene){cutsceneIndex++;renderCutsceneSte
 $("cutsceneNext").addEventListener("click",nextCutsceneStep);
 
 function badgeCutscene(num,leader,badgeName){
+  const nextText={
+    1:"次はキソノタウンを経由して、アズミシティを目指そう。",
+    2:"アズミ市街にいるガチライバルが勝負を待っている。",
+    3:"センコウとツルネは好きな順で攻略できる。もう片方のジムにも挑もう。",
+    4:"センコウとツルネは好きな順で攻略できる。両方を攻略したらアズミへ戻ろう。",
+    5:"なみのりが使えるようになった！ 飛騨方面に巨大な結界が発生。ヒカリシティへ戻ろう。",
+    6:"次はセキソウタウンの博物館方面を調べよう。",
+    7:"セキソウの情報と合わせ、ユキナギでレントたちと作戦を整理しよう。",
+    8:"8つのバッジが揃った。ヒカリ西口からアルシアリーグを目指そう。"
+  }[num]||"";
   sfx("badge");
-  runCutscene(`badge_${num}`,[
+  const steps=[
     {banner:`BADGE ${num} GET!`,duration:950},{effect:"flash"},
     {speaker:leader,text:`勝利だ。${badgeName}を受け取ってくれ！`},
     {speaker:"システム",text:`第${num}バッジを手に入れた！ ショップの品揃えも広がった。`}
-  ],null,true);
+  ];
+  if(nextText) steps.push({speaker:"ガイド",text:nextText});
+  runCutscene(`badge_${num}`,steps,null,true);
 }
 function leagueVictoryCutscene(){
   runCutscene("league_victory",[
@@ -5568,7 +5604,13 @@ function updateAllSigils(){
   const f=state.flags;
   f.allSigils = !!(f.ridgeSigil && f.tideSigil && f.ancientSigil && f.snowSigil && f.flameSigil);
 }
-function exitAt(x,y){ return maps[state.map].exits.find(e=>e.x===x&&e.y===y); }
+function exitAt(x,y){
+  const matches=(maps[state.map].exits||[]).filter(e=>e.x===x&&e.y===y);
+  if(!matches.length) return null;
+  return matches.find(e=>e.require && state.flags[e.require])
+      || matches.find(e=>!e.require)
+      || matches[0];
+}
 
 
 function isWalkableTile(mapId,x,y){
@@ -5797,6 +5839,10 @@ function action(){
         {banner:"守護ポケモン捕獲作戦",duration:900},
         {speaker:"親友",text:"こっちは任せて。二人で突破しよう！"}
       ],()=>startTrainerBattle(n.flag,TRAINERS[n.flag]));
+      return;
+    }
+    if(n.flag==="rival1" && !state.flags.gym2){
+      say("ガチライバル","まず第2ジムを倒してこい。今のお前と戦っても意味がない。");
       return;
     }
     if(n.flag && TRAINERS[n.flag]){
@@ -6633,7 +6679,8 @@ function load(){
     normalizeState();
     ensureCurrentPositionSafe();
     localStorage.setItem(SAVE_KEY,JSON.stringify(state));
-    starterModal.classList.add("hidden");
+    if(state.starter && state.mons.length) starterModal.classList.add("hidden");
+    else starterModal.classList.remove("hidden");
     renderHUD();
     renderMap();
     say("ロード",found.key===SAVE_KEY
@@ -6719,9 +6766,10 @@ $("continueBtn").addEventListener("click",()=>{
     Object.assign(state,JSON.parse(found.raw));
     normalizeState();ensureCurrentPositionSafe();
     localStorage.setItem(SAVE_KEY,JSON.stringify(state));
-    starterModal.classList.add("hidden");
+    if(state.starter && state.mons.length) starterModal.classList.add("hidden");
+    else starterModal.classList.remove("hidden");
     beginGameFromState();
-    say("ロード","冒険を再開した。");
+    say("ロード",state.starter?"冒険を再開した。":"御三家を選ぶところから再開します。");
   }catch(e){ say("ロード","セーブデータを読み込めなかった。"); }
 });
 $("newGameBtn").addEventListener("click",()=>{
@@ -6730,7 +6778,7 @@ $("newGameBtn").addEventListener("click",()=>{
   for(const k of LEGACY_SAVE_KEYS) localStorage.removeItem(k);
   titleScreen.classList.add("hidden");
   normalizeState();renderHUD();renderMap();
-  autosave("new");
+  starterModal.classList.remove("hidden");
 });
 $("resetSaveBtn").addEventListener("click",()=>{
   sfx("click");
