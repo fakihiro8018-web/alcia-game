@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>アルシア地方 マップ移動版 α1</title>
+<style>
+:root{
+  --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
+  --text:#eef6fb;--muted:#9eacb8;--accent:#73c4ff;--gold:#e9cb6f;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior:none}
+main{max-width:760px;margin:auto;padding:12px}
+h1{font-size:20px;margin:4px 0 10px}
+#topbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.badge{font-size:12px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
+#game{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px}
+#mapWrap{position:relative;width:100%;aspect-ratio:12/10;overflow:hidden;border-radius:12px;background:#111}
+#map{position:absolute;inset:0;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(10,1fr);gap:1px;background:#111}
+.tile{position:relative;min-width:0;min-height:0}
+.grass{background:#4e8e4d}.path{background:#b69b68}.tree{background:#244d2d}.water{background:#397fa4}
+.wall{background:#6a6f75}.roof{background:#8e4d4d}.door{background:#4a2e21}.road{background:#9e875e}
+.lab{background:#5977a7}.flower{background:#6f9d4c}.sign{background:#8f7041}.bridge{background:#8f7147}
+.city{background:#777b80}.npc{box-shadow:inset 0 0 0 3px #f3d475}.exit{box-shadow:inset 0 0 0 3px #d6f2ff}
+#player{position:absolute;width:calc(100% / 12);height:calc(100% / 10);transition:left .09s linear,top .09s linear;z-index:8;pointer-events:none}
+#player::before{content:"";position:absolute;inset:15%;border-radius:32% 32% 38% 38%;background:#66b9ff;border:2px solid #fff;box-shadow:0 2px 4px #0008}
+#player::after{content:"";position:absolute;left:30%;right:30%;top:4%;height:24%;background:#1f3a5d;border-radius:50% 50% 30% 30%}
+#dialog{min-height:78px;margin-top:10px;padding:11px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;line-height:1.55}
+#dialog .name{font-weight:700;color:var(--gold);margin-bottom:3px}
+#controls{display:grid;grid-template-columns:repeat(3,70px);grid-template-rows:repeat(3,58px);gap:7px;justify-content:center;margin-top:12px}
+.ctrl{border:1px solid var(--line);border-radius:14px;background:#1b2732;color:#fff;font-size:24px;font-weight:700;touch-action:manipulation}
+.ctrl:active{transform:scale(.97);background:#294157}
+#up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#action{grid-column:2;grid-row:2;font-size:16px;background:#3d3319}#right{grid-column:3;grid-row:2}#down{grid-column:2;grid-row:3}
+#menuRow{display:flex;gap:8px;margin-top:10px}.menuBtn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:#17202a;color:#fff}
+#starterModal,#helpModal{position:fixed;inset:0;background:#000b;z-index:30;display:flex;align-items:center;justify-content:center;padding:18px}
+.modalCard{width:min(520px,100%);background:#1d2833;border:1px solid var(--line);border-radius:18px;padding:16px}
+.starters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.choice{padding:14px 8px;border:1px solid var(--line);border-radius:14px;background:#263849;color:#fff}
+.small{font-size:12px;color:var(--muted)}.hidden{display:none!important}
+@media(max-width:520px){
+  main{padding:8px} #controls{grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,54px)}
+  .starters{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>アルシア地方 マップ移動版 α1</h1>
+  <div id="topbar">
+    <span id="mapName" class="badge">ヤハギタウン</span>
+    <span id="party" class="badge">相棒：未選択</span>
+  </div>
+
+  <section id="game">
+    <div id="mapWrap">
+      <div id="map"></div>
+      <div id="player" aria-label="主人公"></div>
+    </div>
+    <div id="dialog">
+      <div class="name">ガイド</div>
+      <div id="dialogText">御三家を選ぶと冒険が始まります。</div>
+    </div>
+
+    <div id="controls">
+      <button id="up" class="ctrl">▲</button>
+      <button id="left" class="ctrl">◀</button>
+      <button id="action" class="ctrl">A<br><span class="small">話す</span></button>
+      <button id="right" class="ctrl">▶</button>
+      <button id="down" class="ctrl">▼</button>
+    </div>
+
+    <div id="menuRow">
+      <button id="saveBtn" class="menuBtn">セーブ</button>
+      <button id="loadBtn" class="menuBtn">ロード</button>
+      <button id="helpBtn" class="menuBtn">遊び方</button>
+    </div>
+  </section>
+</main>
+
+<div id="starterModal">
+  <div class="modalCard">
+    <h2>御三家を選択</h2>
+    <p>ミオ「この3匹から、最初の相棒を選んでね！」</p>
+    <div class="starters">
+      <button class="choice" data-starter="コノレサ">コノレサ<br><span class="small">くさ</span></button>
+      <button class="choice" data-starter="ヒコラ">ヒコラ<br><span class="small">ほのお</span></button>
+      <button class="choice" data-starter="ミズカバ">ミズカバ<br><span class="small">みず</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="helpModal" class="hidden">
+  <div class="modalCard">
+    <h2>遊び方</h2>
+    <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <button id="closeHelp" class="menuBtn">閉じる</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const $ = (id)=>document.getElementById(id);
+const mapEl=$("map"), playerEl=$("player"), mapNameEl=$("mapName"), partyEl=$("party");
+const dialogTextEl=$("dialogText"), starterModal=$("starterModal"), helpModal=$("helpModal");
+
+const state = {
+  map:"yahagi", x:5, y:7, dir:"up", starter:null,
+  flags:{ professor:false, caught:false }
+};
+
+const W=12, H=10;
+
+const maps = {
+  yahagi:{
+    name:"ヤハギタウン",
+    rows:[
+      "TTTTTTTTTTTT",
+      "T....PP....T",
+      "T.RR.PP.LL.T",
+      "T.RD.PP.LD.T",
+      "T....PP....T",
+      "T....PP....T",
+      "T.F..PP..F.T",
+      "T....PP....T",
+      "T....PP....T",
+      "TTTTTTE TTTT".replace(" ","")
+    ],
+    start:{x:5,y:7},
+    npcs:[
+      {x:4,y:6,name:"お母さん",text:"準備は大丈夫？ 無理はしないでね。"},
+      {x:7,y:5,name:"町の少年",text:"ヒカリシティって、アルシア地方で一番大きい街なんだって！"},
+      {x:2,y:5,name:"おじいさん",text:"昔、この辺りにも山から大きな鳴き声が響いたことがあったのう。"}
+    ],
+    exits:[{x:6,y:9,to:"route1",tx:6,ty:1,msg:"1番道路へ進んだ。"}],
+    signs:[{x:2,y:3,text:"主人公の家"},{x:9,y:3,text:"ミオの研究準備所"}]
+  },
+  route1:{
+    name:"1番道路",
+    rows:[
+      "TTTTTTE TTTT".replace(" ",""),
+      "TGGG.P.GGGGT",
+      "TGGG.P.GGGGT",
+      "T....P.....T",
+      "T.PPPPPPP..T",
+      "T.P.GGG.P..T",
+      "T.P.GGG.P..T",
+      "T.P.....P..T",
+      "T.PPPPPPP..T",
+      "TTTTTTE TTTT".replace(" ","")
+    ],
+    start:{x:6,y:1},
+    npcs:[
+      {x:3,y:3,name:"たんぱんこぞう",text:"この先のヒカリシティで図鑑をもらえるらしいよ！"},
+      {x:8,y:7,name:"旅人",text:"草むらにはポッポやムックル、メリープ、ウパーがいるぞ。"}
+    ],
+    exits:[
+      {x:6,y:0,to:"yahagi",tx:6,ty:8,msg:"ヤハギタウンへ戻った。"},
+      {x:6,y:9,to:"hikari",tx:6,ty:1,msg:"ヒカリシティへ到着した。"}
+    ],
+    signs:[]
+  },
+  hikari:{
+    name:"ヒカリシティ",
+    rows:[
+      "CCCCCCECCCCC",
+      "C....PP....C",
+      "C.LL.PP.RR.C",
+      "C.LD.PP.RD.C",
+      "C....PP....C",
+      "CPPPPPPPPPPC",
+      "C....PP....C",
+      "C.RR.PP.LL.C",
+      "C.RD.PP.LD.C",
+      "CCCCCCCCCCCC"
+    ],
+    start:{x:6,y:1},
+    npcs:[
+      {x:3,y:5,name:"研究員",text:"カツラギ博士は、人とポケモンの暮らし方を研究しているんだ。強さだけじゃ測れない関係があるってね。"},
+      {x:8,y:5,name:"会社員",text:"最近、黒いスーツの連中をよく見るな。普通の会社員には見えないけど。"},
+      {x:5,y:7,name:"カツラギ博士",text:"よく来たね。君の旅が、人とポケモンの関係を知る手がかりになるはずだ。図鑑を託そう。",flag:"professor"}
+    ],
+    exits:[
+      {x:6,y:0,to:"route1",tx:6,ty:8,msg:"1番道路へ戻った。"}
+    ],
+    signs:[
+      {x:3,y:3,text:"カツラギ研究所"},
+      {x:9,y:3,text:"ヒカリジム（今は挑戦できない）"}
+    ]
+  }
+};
+
+function tileClass(ch){
+  return ({
+    "T":"tree","G":"grass","P":"path","R":"roof","D":"door",
+    "W":"water","C":"city","F":"flower","E":"path","L":"lab",".":"path"
+  })[ch] || "path";
+}
+function isBlocked(ch){ return ["T","R","W","C","L"].includes(ch); }
+
+function renderMap(){
+  const m=maps[state.map];
+  mapNameEl.textContent=m.name;
+  mapEl.innerHTML="";
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const ch=m.rows[y][x];
+      const d=document.createElement("div");
+      d.className="tile "+tileClass(ch);
+      if(m.npcs.some(n=>n.x===x&&n.y===y)) d.classList.add("npc");
+      if(m.exits.some(e=>e.x===x&&e.y===y)) d.classList.add("exit");
+      if(m.signs.some(s=>s.x===x&&s.y===y)) d.classList.add("sign");
+      mapEl.appendChild(d);
+    }
+  }
+  renderPlayer();
+}
+function renderPlayer(){
+  playerEl.style.left=(state.x*100/W)+"%";
+  playerEl.style.top=(state.y*100/H)+"%";
+}
+function say(name,text){
+  $("dialog").querySelector(".name").textContent=name;
+  dialogTextEl.textContent=text;
+}
+function npcAt(x,y){ return maps[state.map].npcs.find(n=>n.x===x&&n.y===y); }
+function signAt(x,y){ return maps[state.map].signs.find(s=>s.x===x&&s.y===y); }
+function exitAt(x,y){ return maps[state.map].exits.find(e=>e.x===x&&e.y===y); }
+
+function move(dx,dy,dir){
+  state.dir=dir;
+  const nx=state.x+dx, ny=state.y+dy;
+  if(nx<0||ny<0||nx>=W||ny>=H) return;
+  const row=maps[state.map].rows[ny];
+  if(!row) return;
+  const ch=row[nx];
+  if(isBlocked(ch) || npcAt(nx,ny)){
+    say("ガイド","ここは通れない。");
+    return;
+  }
+  state.x=nx; state.y=ny; renderPlayer();
+  const ex=exitAt(nx,ny);
+  if(ex){
+    state.map=ex.to; state.x=ex.tx; state.y=ex.ty;
+    renderMap(); say("移動",ex.msg);
+    return;
+  }
+  if(ch==="G" && Math.random()<0.16){
+    const wild = state.map==="route1"
+      ? ["ムックル","メリープ","ウパー","ポッポ"][Math.floor(Math.random()*4)]
+      : "野生ポケモン";
+    say("草むら","野生の"+wild+"が飛び出してきた！ （α版では戦闘は次回実装）");
+  }
+}
+function frontPos(){
+  const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[state.dir];
+  return [state.x+d[0],state.y+d[1]];
+}
+function action(){
+  const [fx,fy]=frontPos();
+  const n=npcAt(fx,fy);
+  if(n){
+    say(n.name,n.text);
+    if(n.flag==="professor"){
+      state.flags.professor=true;
+      say("カツラギ博士", n.text+"　ポケモン図鑑を受け取った！");
+    }
+    return;
+  }
+  const s=signAt(fx,fy);
+  if(s){ say("看板",s.text); return; }
+  say("ガイド","目の前には特に何もない。");
+}
+function save(){
+  localStorage.setItem("alciaMapAlpha1",JSON.stringify(state));
+  say("セーブ","現在の冒険を保存した。");
+}
+function load(){
+  const raw=localStorage.getItem("alciaMapAlpha1");
+  if(!raw){ say("ロード","セーブデータがない。"); return; }
+  try{
+    const s=JSON.parse(raw);
+    Object.assign(state,s);
+    starterModal.classList.add("hidden");
+    partyEl.textContent="相棒："+(state.starter||"未選択");
+    renderMap(); say("ロード","冒険を再開した。");
+  }catch(e){ say("ロード","セーブデータを読み込めなかった。"); }
+}
+
+document.querySelectorAll(".choice").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    state.starter=btn.dataset.starter;
+    partyEl.textContent="相棒："+state.starter;
+    starterModal.classList.add("hidden");
+    say("ミオ",state.starter+"を選ぶんだね！ まずは町の南から1番道路へ行ってみよう！");
+    renderMap();
+  });
+});
+
+$("up").addEventListener("click",()=>move(0,-1,"up"));
+$("down").addEventListener("click",()=>move(0,1,"down"));
+$("left").addEventListener("click",()=>move(-1,0,"left"));
+$("right").addEventListener("click",()=>move(1,0,"right"));
+$("action").addEventListener("click",action);
+$("saveBtn").addEventListener("click",save);
+$("loadBtn").addEventListener("click",load);
+$("helpBtn").addEventListener("click",()=>helpModal.classList.remove("hidden"));
+$("closeHelp").addEventListener("click",()=>helpModal.classList.add("hidden"));
+
+document.addEventListener("keydown",(e)=>{
+  const k=e.key.toLowerCase();
+  if(["arrowup","w"].includes(k)){e.preventDefault();move(0,-1,"up");}
+  else if(["arrowdown","s"].includes(k)){e.preventDefault();move(0,1,"down");}
+  else if(["arrowleft","a"].includes(k)){e.preventDefault();move(-1,0,"left");}
+  else if(["arrowright","d"].includes(k)){e.preventDefault();move(1,0,"right");}
+  else if(["enter"," "].includes(e.key)){e.preventDefault();action();}
+});
+
+renderMap();
+</script>
+</body>
+</html>
