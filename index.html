@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>アルシア地方 α43 デバッグ強化・なみのり・伝説戦修正版</title>
+<title>アルシア地方 α51 共生進化タイミング連動版</title>
 <style>
 :root{
   --bg:#0c1116;--panel:#17202a;--panel2:#202b36;--line:#394857;
@@ -22,7 +22,12 @@ h1{font-size:20px;margin:4px 0 10px}
 .grass{background:#4e8e4d}.path{background:#b69b68}.tree{background:#244d2d}.water{background:#397fa4}
 .wall{background:#6a6f75}.roof{background:#8e4d4d}.door{background:#4a2e21}.road{background:#9e875e}
 .lab{background:#5977a7}.flower{background:#6f9d4c}.sign{background:#8f7041}.bridge{background:#8f7147}
-.city{background:#777b80}.npc{box-shadow:inset 0 0 0 3px #f3d475}.exit{box-shadow:inset 0 0 0 3px #d6f2ff}
+.city{background:#777b80}.npc{box-shadow:inset 0 0 0 3px #9db0bf}
+.npc-major{box-shadow:inset 0 0 0 3px #ff6688!important}
+.npc-town{box-shadow:inset 0 0 0 3px #67c7ff!important}
+.npc-item{box-shadow:inset 0 0 0 3px #ffd45f!important}
+.npc-trainer{box-shadow:inset 0 0 0 3px #ff9b4a!important}
+.exit{box-shadow:inset 0 0 0 3px #d6f2ff}
 #player{position:absolute;width:calc(100% / 12);height:calc(100% / 10);transition:left .09s linear,top .09s linear;z-index:8;pointer-events:none}
 #player::before{content:"";position:absolute;inset:15%;border-radius:32% 32% 38% 38%;background:#66b9ff;border:2px solid #fff;box-shadow:0 2px 4px #0008}
 #player::after{content:"";position:absolute;left:30%;right:30%;top:4%;height:24%;background:#1f3a5d;border-radius:50% 50% 30% 30%}
@@ -174,11 +179,34 @@ h1{font-size:20px;margin:4px 0 10px}
 .debugGrid .sysBtn{min-height:44px}
 #debugOutput{white-space:pre-wrap;max-height:220px;overflow:auto}
 @media(max-width:520px){.debugGrid{grid-template-columns:1fr}}
+
+/* α45 classic exploration */
+.tile.ledge{position:relative}
+.tile.ledge::after{content:"▼";position:absolute;left:50%;top:50%;transform:translate(-50%,-48%);font-size:11px;color:#d7c58d;text-shadow:0 1px #000}
+.hiddenFoundFlash{animation:hiddenFound .55s ease}
+@keyframes hiddenFound{0%{filter:brightness(1)}50%{filter:brightness(1.8)}100%{filter:brightness(1)}}
+.classicHint{font-size:11px;color:#c7b98b}
+
+.mapLegend{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 2px;font-size:11px;color:#cdd6de}
+.legendChip{display:inline-flex;align-items:center;gap:5px;border:1px solid #465563;border-radius:999px;padding:4px 7px;background:#111923}
+.legendDot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legendMajor{background:#ff6688}.legendTown{background:#67c7ff}.legendItem{background:#ffd45f}.legendTrainer{background:#ff9b4a}
+
+/* α48 terrain identity / verticality */
+.tile.highland{background:linear-gradient(135deg,#5e674f,#768063);box-shadow:inset 0 -5px 0 #46503e}
+.tile.cliff{background:linear-gradient(135deg,#4b4038,#2e2926);box-shadow:inset 0 0 0 2px #6c5b4d}
+.tile.stairs{background:repeating-linear-gradient(0deg,#8d8070 0 4px,#6f6458 4px 7px)}
+.tile.rail{background:linear-gradient(90deg,#554b43 0 25%,#999 25% 32%,#4b433c 32% 68%,#999 68% 75%,#554b43 75% 100%)}
+.tile.snowbank{background:linear-gradient(#eef7ff,#bed4e8);box-shadow:inset 0 -4px 0 #9bb9d0}
+.tile.urban{background:linear-gradient(135deg,#59636f,#454f59)}
+.tile.waterfall{background:repeating-linear-gradient(90deg,#5aa8de 0 4px,#bce9ff 4px 7px)}
+.tile.landmark{outline:2px solid #f1d470;outline-offset:-3px}
+.heightHint{font-size:11px;color:#cfc5a6;margin-top:3px}
 </style>
 </head>
 <body>
 <main>
-  <h1>アルシア地方 α43 デバッグ強化・なみのり・伝説戦修正版</h1>
+  <h1>アルシア地方 α51 共生進化タイミング連動版</h1>
   <div id="topbar">
     <span id="mapName" class="badge">ヤハギタウン</span>
     <span id="party" class="badge">相棒：未選択</span>
@@ -195,7 +223,13 @@ h1{font-size:20px;margin:4px 0 10px}
       <div id="map"></div>
       <div id="player" aria-label="主人公"></div>
     </div>
-    <div id="dialog">
+    <div class="mapLegend" aria-label="マップ色分け">
+  <span class="legendChip"><span class="legendDot legendMajor"></span>主要NPC</span>
+  <span class="legendChip"><span class="legendDot legendTown"></span>町の人</span>
+  <span class="legendChip"><span class="legendDot legendItem"></span>アイテム・調べる物</span>
+  <span class="legendChip"><span class="legendDot legendTrainer"></span>トレーナー</span>
+</div>
+<div id="dialog">
       <div class="name">ガイド</div>
       <div id="dialogText">御三家を選ぶと冒険が始まります。</div>
     </div>
@@ -343,7 +377,7 @@ h1{font-size:20px;margin:4px 0 10px}
       <button id="newGameBtn" class="titleBtn">はじめから</button>
       <button id="resetSaveBtn" class="titleBtn dangerBtn">セーブデータを消す</button>
     </div>
-    <div class="versionBadge">Version α43 Debug Candidate</div>
+    <div class="versionBadge">Version α51 Symbiosis Timing</div>
   </div>
 </div>
 <div id="autosaveToast">オートセーブしました</div>
@@ -371,7 +405,7 @@ h1{font-size:20px;margin:4px 0 10px}
   <div class="modalCard">
     <h2>遊び方</h2>
     <p>画面下の▲◀▶▼で主人公を移動します。NPCや看板の前で「A」を押すと話せます。</p>
-    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α43ではデバッグモードを追加し、ワープ・回復・レベル調整・ボール追加・8バッジ切替・進行診断・戦闘セルフテストができます。伝説イベントは2匹が現れつつ実際に戦うのはセーブごとに決まった片方だけに修正。13番水路は本当の水上タイルとなり、第5バッジ後になみのり状態で移動・水上エンカウントします。セーブデータにバージョン管理を追加。野生戦のボール選択画面が戦闘画面の裏に隠れていた問題も修正し、モンスターボール等を自分で選んで投げられるようにしました。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
+    <p>青い縁のマスは次のエリアへの出口です。草むらでは野生ポケモンとバトルになり、4つの技・PP・タイプ相性・状態異常・能力変化・素早さ順・急所・特性・持ち物・捕獲・経験値・レベルアップ・進化・技習得が発生します。捕獲したポケモンはボックス管理でき、図鑑にも自動登録されます。技マシン、持ち物装備、バッジ数によるショップ拡張、詳細画面にも対応しています。さらに雨・砂嵐・雪・おいかぜ・エレキフィールド、ダブルバトル、ジム固有ギミックにも対応しています。本編の重要場面では連続会話、画面揺れ・フラッシュ、ボス登場、バッジ獲得、リーグ制覇、クリア後解禁の専用演出が入ります。α51では主要NPCの共生進化タイミングを「その進化場所へ初めて行ける区間を主人公が越えた後」に統一しました。旧宿場跡を越えた後は親友のオオタチがミチタチ、旧センコウ鉱山の区間を越えた後はテツジのマグカルゴがロウガネン、潮騒の海食洞を越えた後はカイトのオクタンがアミダコ、飛騨山岳参道を越えた後はレントのヨルノズクがヨミミズクになります。ハルクのウソッキーも木曽古道を越えた後のチャンピオン戦ではギタイボクになります。つまりNPC側も主人公と同じ旅の時間軸で進化していきます。トレーナーAIは技選択や一部交代も行います。バッグと手持ちも確認できます。キーボードでは矢印キー/WASD、Enter/Spaceでも操作できます。</p>
     <button id="closeHelp" class="menuBtn">閉じる</button>
   </div>
 </div>
@@ -388,7 +422,7 @@ const cutsceneOverlay=$("cutsceneOverlay"), eventBanner=$("eventBanner");
 const titleScreen=$("titleScreen"), autosaveToast=$("autosaveToast");
 
 const state = {
-  saveVersion:43,
+  saveVersion:51,
   map:"yahagi", x:5, y:7, dir:"up", starter:null,
   surfing:false,
   legendVersion:null,
@@ -432,8 +466,8 @@ const maps = {
       {x:8,y:7,name:"親友",text:"御三家を選んだなら、最初の勝負をしよう！",flag:"friend1"},
       {x:7,y:5,name:"町の少年",text:"ヒカリシティはここから西側だよ。アルシア地方で一番大きい街なんだって！"},
       {x:2,y:4,name:"おじいさん",text:"昔、この辺りにも山から大きな鳴き声が響いたことがあったのう。"},
-      {x:8,y:6,name:"散歩中の女性",text:"町の花壇にオレンのみを植えたの。旅立つ前に一つ持っていく？",flag:"yahagiBerry"}
-    ],
+      {x:8,y:6,name:"散歩中の女性",text:"町の花壇にオレンのみを植えたの。旅立つ前に一つ持っていく？",flag:"yahagiBerry"},
+      {x:7,y:6,name:"近所のおじさん",text:"昔はこの先の水路を小舟で渡ったもんだ。今はポケモンとなみのりする方が早いけどな。"}],
     exits:[
       {x:0,y:5,to:"route1",tx:10,ty:5,msg:"西へ進み、1番道路に入った。",require:"friend1",deny:"旅立つ前に親友との最初の勝負をしよう。"},
       {x:3,y:3,to:"homeInterior",tx:5,ty:8,msg:"自宅に入った。"},
@@ -497,8 +531,8 @@ const maps = {
       {x:8,y:5,name:"会社員",text:"最近、黒いスーツの連中をよく見るな。普通の会社員には見えないけど。"},
       {x:5,y:7,name:"カツラギ博士",text:"よく来たね。君の旅が、人とポケモンの関係を知る手がかりになるはずだ。図鑑を託そう。",flag:"professor"},
       {x:2,y:6,name:"レント",text:"北部で異常が起きている。第5バッジを持つ君にも力を貸してほしい。",flag:"emergencyMeeting"},
-      {x:9,y:6,name:"街の案内人",text:"西地区にポケモンセンター、東地区にフレンドリィショップがあるよ。"}
-    ],
+      {x:9,y:6,name:"街の案内人",text:"西地区にポケモンセンター、東地区にフレンドリィショップがあるよ。"},
+      {x:8,y:7,name:"会社員",text:"大きな街でも、朝はポッポの声で目が覚める。そういうところは田舎と変わらないよ。"}],
     exits:[
       {x:11,y:5,to:"route1",tx:1,ty:4,msg:"東へ進み、1番道路へ戻った。"},
       {x:5,y:0,to:"route2",tx:5,ty:8,msg:"北へ進み、2番道路に入った。",require:"professor",deny:"まずカツラギ博士から図鑑を受け取ろう。"},
@@ -780,13 +814,487 @@ const maps = {
       {x:9,y:7,name:"キャンプボーイ",text:"山で鍛えたポケモンと勝負しよう！",flag:"route4TrainerB"}    ],
     exits:[
       {x:0,y:4,to:"nagara",tx:10,ty:4,msg:"西へ戻り、ナガラシティへ着いた。"},
-      {x:11,y:4,to:"kiso",tx:1,ty:5,msg:"東へ進み、キソノタウンへ到着した。"}
+      {x:11,y:4,to:"route4b",tx:1,ty:5,msg:"峠道の奥へ進み、4番道路・木曽古道に入った。"}
     ],
     signs:[
       {x:2,y:4,text:"← 西：ナガラシティ"},
       {x:9,y:4,text:"→ 東：キソノタウン"}
     ]
   },
+
+  route4b:{
+    name:"4番道路・木曽古道（中山道モチーフ）",
+    rows:[
+      "TTTTTTTTTTTT",
+      "TGG.....GGGGT",
+      "TGG.PPP..GGGT",
+      "T...P.P.....T",
+      "EPPPP.PPPPPE",
+      "T.P...P..G.T",
+      "T.P.PPP..G.T",
+      "T...P......T",
+      "TGG....GGGGT",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:1,y:5},
+    npcs:[
+      {x:4,y:2,name:"旅籠跡",text:"古い木札に『木曽路はすべて山の中』と刻まれている。"},
+      {x:8,y:6,name:"旅人",text:"本道は東。南の石畳は昔の宿場へ続いているらしい。"},
+      {x:6,y:7,name:"やまおとこ",text:"細道だけが山道じゃない。広い場所では進み方を自分で選べ！",flag:"route4BTrainer"}
+    ],
+    exits:[
+      {x:0,y:4,to:"route4",tx:10,ty:4,msg:"西へ戻り、4番道路前半へ出た。"},
+      {x:11,y:4,to:"kiso",tx:1,ty:5,msg:"東へ抜け、キソノタウンへ到着した。"},
+      {x:4,y:9,to:"oldPostTown",tx:5,ty:1,msg:"石畳を下り、旧宿場跡へ入った。"}
+    ],
+    signs:[
+      {x:2,y:4,text:"← ナガラ方面"},
+      {x:9,y:4,text:"→ キソノタウン"},
+      {x:4,y:8,text:"↓ 寄り道：旧宿場跡"}
+    ]
+  },
+  oldPostTown:{
+    name:"旧宿場跡（中山道モチーフ）",
+    rows:[
+      "TTTTTETTTTTT",
+      "T..RR..RR..T",
+      "T..RD..RD..T",
+      "T..........T",
+      "T.PPPPPPPP.T",
+      "T.P..S...P.T",
+      "T.PPPPPPPP.T",
+      "T..RR..RR..T",
+      "T..RD..RD..T",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:5,y:1},
+    npcs:[
+      {x:5,y:5,name:"道祖神",text:"旅人とポケモンの安全を祈る古い石像だ。"},
+      {x:8,y:6,name:"古い荷箱",text:"中にまだ使えそうな道具が残っている。",flag:"oldPostItem"}
+    ],
+    exits:[{x:5,y:0,to:"route4b",tx:4,ty:8,msg:"木曽古道へ戻った。"}],
+    signs:[{x:5,y:2,text:"かつて旅人で賑わった宿場。今は静かな石畳だけが残る。"}]
+  },
+
+  route5b:{
+    name:"5番道路・安曇渓谷（黒部峡谷モチーフ）",
+    rows:[
+      "TTTTTETTTTTT",
+      "TGGHHH..GGGT",
+      "T..HHAAPP..T",
+      "T.PHH..PP..T",
+      "T.PQJWW.P..T",
+      "T.PQBBB.P..T",
+      "T.PQJWW.P..T",
+      "T..PPPPP...T",
+      "TGG..P..GGGT",
+      "TTTTTETTTTTT"
+    ],
+    start:{x:5,y:1},
+    npcs:[
+      {x:2,y:3,name:"渓谷案内人",text:"吊り橋の下は深い谷だ。脇道にも珍しいポケモンがいるぞ。"},
+      {x:8,y:7,name:"バードキーパー",text:"谷を渡る風を使う鳥ポケモンは速いよ！",flag:"route5BTrainer"}
+    ],
+    exits:[
+      {x:5,y:0,to:"route5",tx:5,ty:8,msg:"南西へ戻り、5番道路前半へ出た。"},
+      {x:5,y:9,to:"azumi",tx:5,ty:1,msg:"渓谷を抜け、アズミシティへ到着した。"},
+      {x:11,y:5,to:"ravineLower",tx:1,ty:5,msg:"脇の下り道から渓谷下層へ降りた。",require:"gym5",deny:"水量が多く、なみのりが使えないと下層へ進めない。"}
+    ],
+    signs:[{x:5,y:8,text:"↑ アズミシティ"},{x:9,y:5,text:"→ 後で戻れそうな下り道"}]
+  },
+  ravineLower:{
+    name:"安曇渓谷・下層",
+    rows:[
+      "TTTTTTTTTTTT",
+      "TWWWWWWWWW.T",
+      "TWIIPPIIWW.T",
+      "TWIIPPIIWW.T",
+      "EPPPPPPPP..T",
+      "TWWIIPPIWW.T",
+      "TWWIIPPIWW.T",
+      "T....PP....T",
+      "T....GG....T",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:1,y:5},
+    npcs:[
+      {x:7,y:7,name:"流木の陰",text:"水に磨かれた珍しい石がある。",flag:"ravineStone"}
+    ],
+    exits:[{x:0,y:4,to:"route5b",tx:10,ty:5,msg:"渓谷上層へ戻った。"}],
+    signs:[{x:5,y:7,text:"渓谷下層。なみのりでしか来られない静かな場所。"}]
+  },
+
+  route6b:{
+    name:"6番道路・鉱山麓（神岡鉱山モチーフ）",
+    rows:[
+      "TTTTTTTTTTTT",
+      "TGGG....GGGT",
+      "TGG.PXXX.GGT",
+      "T...P..X...T",
+      "EPPPP..XPPPE",
+      "T..P...XP..T",
+      "T..PPXXXX..T",
+      "T....P.....T",
+      "TGG..P..GGGT",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:10,y:5},
+    npcs:[
+      {x:8,y:2,name:"鉱山作業員",text:"西へ行けばセンコウ。南の坑道は今も一部だけ入れる。"},
+      {x:3,y:6,name:"さぎょういん",text:"広い坑口で鍛えた相棒を見てくれ！",flag:"route6BTrainer"}
+    ],
+    exits:[
+      {x:11,y:4,to:"route6",tx:1,ty:4,msg:"東へ戻り、6番道路前半へ出た。"},
+      {x:0,y:4,to:"senkou",tx:10,ty:5,msg:"西へ抜け、センコウシティへ到着した。"},
+      {x:5,y:9,to:"abandonedMine",tx:5,ty:1,msg:"古い坑道へ入った。"}
+    ],
+    signs:[{x:5,y:8,text:"↓ 寄り道：旧センコウ鉱山"}]
+  },
+  abandonedMine:{
+    name:"旧センコウ鉱山（神岡鉱山モチーフ）",
+    rows:[
+      "WWWWWEWWWWWW",
+      "W..S....S..W",
+      "W..PPPPPP..W",
+      "W..P.S..P..W",
+      "WPPP.S..PPPW",
+      "W.P..SS..P.W",
+      "W.PPPPPPPP.W",
+      "W....P.....W",
+      "W....P.....W",
+      "WWWWWWWWWWWW"
+    ],
+    start:{x:5,y:1},
+    npcs:[
+      {x:3,y:4,name:"古いトロッコ",text:"レールは錆びているが、奥へ続いていた形跡がある。"},
+      {x:8,y:6,name:"採掘箱",text:"鉱石の間に道具が挟まっている。",flag:"mineItem"}
+    ],
+    exits:[
+      {x:5,y:0,to:"route6b",tx:5,ty:8,msg:"鉱山麓へ戻った。"},
+      {x:10,y:4,to:"abandonedMineB1",tx:1,ty:4,msg:"階段を下り、旧鉱山B1Fへ進んだ。"}
+    ],
+    signs:[{x:5,y:2,text:"落盤跡の向こうから、低い鳴き声が響く。"}]
+  },
+
+
+  abandonedMineB1:{
+    name:"旧センコウ鉱山 B1F",
+    rows:[
+      "WWWWWWWWWWWW",
+      "W..XXXXXX..W",
+      "W..X....X..W",
+      "WPPX.S..XPPW",
+      "EPPX.S..XPPE",
+      "W..X.SS.X..W",
+      "W..XXXXXX..W",
+      "W....A.....W",
+      "W....P.....W",
+      "WWWWWWWWWWWW"
+    ],
+    start:{x:1,y:4},
+    npcs:[
+      {x:8,y:6,name:"旧鉱山の作業記録",text:"『深部で奇妙な共鳴音を確認。採掘を中止する』とある。"},
+      {x:4,y:3,name:"ベテラン作業員",text:"昔の坑道は迷いやすいぞ。レールを目印にしろ。",flag:"mineB1Trainer"}
+    ],
+    exits:[
+      {x:0,y:4,to:"abandonedMine",tx:9,ty:4,msg:"旧鉱山1Fへ戻った。"},
+      {x:11,y:4,to:"abandonedMineB2",tx:1,ty:4,msg:"さらに深い坑道へ進んだ。"}
+    ],
+    signs:[{x:5,y:7,text:"↓ B2Fへ続く古い昇降路"}]
+  },
+  abandonedMineB2:{
+    name:"旧センコウ鉱山 B2F・最深部",
+    rows:[
+      "WWWWWWWWWWWW",
+      "W...SSSS...W",
+      "W..SPPPPS..W",
+      "W..SP..PS..W",
+      "EPPP....PPPW",
+      "W..SP..PS..W",
+      "W..SPPPPS..W",
+      "W...SSSS...W",
+      "W..........W",
+      "WWWWWWWWWWWW"
+    ],
+    start:{x:1,y:4},
+    npcs:[
+      {x:7,y:4,name:"共鳴する鉱脈",text:"触れると低い音が坑道全体へ響く。",flag:"mineDeepItem"}
+    ],
+    exits:[{x:0,y:4,to:"abandonedMineB1",tx:10,ty:4,msg:"B1Fへ戻った。"}],
+    signs:[{x:5,y:2,text:"最深部。人の手が入る前から存在した空洞らしい。"}]
+  },
+
+  route9b:{
+    name:"9番道路・海食崖（東尋坊モチーフ）",
+    rows:[
+      "TTTTTETTTTTT",
+      "TGG..P...WWT",
+      "T...PPP..WWT",
+      "T.PP..P..WWT",
+      "T.P...PPPWWT",
+      "T.P.WWW.PWWT",
+      "T.P.WWW.P..T",
+      "T.PPPPPPP..T",
+      "TGG..P..GGGT",
+      "TTTTTETTTTTT"
+    ],
+    start:{x:5,y:1},
+    npcs:[
+      {x:2,y:4,name:"漁師",text:"崖下の洞穴は潮が引いた時だけ静かになる。"},
+      {x:8,y:7,name:"かいパンやろう",text:"海岸線は広いだろ？ 好きな道からかかってこい！",flag:"route9BTrainer"}
+    ],
+    exits:[
+      {x:5,y:0,to:"route9",tx:5,ty:8,msg:"北へ戻り、9番道路前半へ出た。"},
+      {x:5,y:9,to:"shionagi",tx:5,ty:1,msg:"海食崖を抜け、シオナギシティへ到着した。"},
+      {x:11,y:6,to:"seaCave",tx:1,ty:5,msg:"海食洞へ入った。"}
+    ],
+    signs:[{x:9,y:6,text:"→ 寄り道：海食洞"}]
+  },
+  seaCave:{
+    name:"潮騒の海食洞（東尋坊モチーフ）",
+    rows:[
+      "WWWWWWWWWWWW",
+      "W....PP....W",
+      "W.WW.PP.WW.W",
+      "W.W..PP..W.W",
+      "EPPPPPPPPP.W",
+      "W.W..II..W.W",
+      "W.WW.II.WW.W",
+      "W....PP....W",
+      "W....GG....W",
+      "WWWWWWWWWWWW"
+    ],
+    start:{x:1,y:5},
+    npcs:[
+      {x:6,y:7,name:"潮だまり",text:"波に削られた洞窟。奥には海のポケモンの気配がある。"},
+      {x:8,y:8,name:"漂着箱",text:"古い船の印が付いた箱だ。",flag:"seaCaveItem"}
+    ],
+    exits:[
+      {x:0,y:4,to:"route9b",tx:10,ty:6,msg:"海食崖へ戻った。"},
+      {x:5,y:9,to:"seaCaveLower",tx:5,ty:1,msg:"波音の響く下層へ降りた。"}
+    ],
+    signs:[]
+  },
+
+
+  seaCaveLower:{
+    name:"潮騒の海食洞・下層",
+    rows:[
+      "WWWWWEWWWWWW",
+      "W...PP.....W",
+      "W.JJPPJJ...W",
+      "W.JIIPIJ...W",
+      "WPPPBPIPPPPW",
+      "W.JIIPIJ...W",
+      "W.JJPPJJ...W",
+      "W...PP.....W",
+      "W...GG.....W",
+      "WWWWWWWWWWWW"
+    ],
+    start:{x:5,y:1},
+    npcs:[
+      {x:8,y:7,name:"青い貝殻",text:"潮の満ち引きで磨かれた珍しい貝殻だ。",flag:"seaLowerItem"}
+    ],
+    exits:[{x:5,y:0,to:"seaCave",tx:5,ty:8,msg:"海食洞上層へ戻った。"}],
+    signs:[{x:5,y:4,text:"滝の裏側に小さな空間が見える。"}]
+  },
+
+  route14b:{
+    name:"14番道路・飛騨古道（山岳参道モチーフ）",
+    rows:[
+      "TTTTTETTTTTT",
+      "TGGHHH..GGGT",
+      "T..HHAAS...T",
+      "T.PHHPPPP..T",
+      "T.PQQS..P..T",
+      "T.PPPPPPP..T",
+      "T...P.P....T",
+      "TGG.PPP.GGGT",
+      "T....P.....T",
+      "TTTTTETTTTTT"
+    ],
+    start:{x:5,y:8},
+    npcs:[
+      {x:2,y:3,name:"石仏",text:"山へ入る者を見守る古い石仏だ。"},
+      {x:8,y:5,name:"山岳レンジャー",text:"古道は一本道じゃない。安全な道を選ぶのも実力だ！",flag:"route14BTrainer"}
+    ],
+    exits:[
+      {x:5,y:9,to:"route14",tx:5,ty:1,msg:"南東へ戻り、14番道路前半へ出た。"},
+      {x:5,y:0,to:"yuragi",tx:5,ty:8,msg:"古道を抜け、ユラギタウンへ到着した。"},
+      {x:0,y:3,to:"mountainShrinePath",tx:10,ty:5,msg:"脇の参道へ入った。"}
+    ],
+    signs:[{x:2,y:3,text:"← 寄り道：古い山岳参道"}]
+  },
+  mountainShrinePath:{
+    name:"飛騨山岳参道",
+    rows:[
+      "TTTTTTTTTTTT",
+      "T....S.....T",
+      "T...PPP....T",
+      "T.S.P.P.S..T",
+      "TPPPPPPPPPE",
+      "T...P.P....T",
+      "T.S.PPP.S..T",
+      "T....P.....T",
+      "T....S.....T",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:10,y:5},
+    npcs:[
+      {x:5,y:1,name:"古い祠",text:"三体の守護者を象った小さな彫刻が並んでいる。"},
+      {x:5,y:7,name:"旅の僧",text:"夜、この参道ではヨルノズクが人の帰り道を見守る。長く人と歩んだ個体は、ここで新たな姿へ至るという。"}
+    ],
+    exits:[{x:11,y:4,to:"route14b",tx:1,ty:3,msg:"飛騨古道へ戻った。"}],
+    signs:[]
+  },
+
+  route15b:{
+    name:"15番道路・雪谷（雪の大谷モチーフ）",
+    rows:[
+      "TTTTTETTTTTT",
+      "T....P.....T",
+      "T.NN.P.NN..T",
+      "T.NN.P.NN..T",
+      "T.PPPAPPPP.T",
+      "T.P.HHH..P.T",
+      "T.PAHHH..P.T",
+      "T.PPPPPPPP.T",
+      "T....P.....T",
+      "TTTTTETTTTTT"
+    ],
+    start:{x:5,y:8},
+    npcs:[
+      {x:3,y:4,name:"雪かき隊",text:"雪壁の向こうに古い集落へ続く分岐がある。"},
+      {x:8,y:7,name:"スノーハイカー",text:"雪壁の間でも逃げ道はある。よく見て進め！",flag:"route15BTrainer"}
+    ],
+    exits:[
+      {x:5,y:9,to:"route15",tx:5,ty:1,msg:"南へ戻り、15番道路前半へ出た。"},
+      {x:5,y:0,to:"yukinagi",tx:5,ty:8,msg:"雪谷を抜け、ユキナギタウンへ到着した。"},
+      {x:11,y:4,to:"snowVillageRuins",tx:1,ty:5,msg:"雪壁の切れ目から廃集落へ入った。"}
+    ],
+    signs:[{x:9,y:4,text:"→ 寄り道：雪の廃集落"}]
+  },
+  snowVillageRuins:{
+    name:"雪の廃集落（白川郷モチーフ）",
+    rows:[
+      "TTTTTTTTTTTT",
+      "T..RR..RR..T",
+      "T..RD..RD..T",
+      "T..........T",
+      "EPPPPPPPPP.T",
+      "T.P..S...P.T",
+      "T.PPPPPPPP.T",
+      "T..RR..RR..T",
+      "T..RD..RD..T",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:1,y:5},
+    npcs:[
+      {x:5,y:5,name:"雪に埋もれた日記",text:"『夜、白い影が屋根の上を渡った。怖くはなかった』と書かれている。"},
+      {x:8,y:6,name:"古い箪笥",text:"中に使われていない道具が残っている。",flag:"snowVillageItem"}
+    ],
+    exits:[{x:0,y:4,to:"route15b",tx:10,ty:4,msg:"雪谷へ戻った。"}],
+    signs:[]
+  },
+
+  route19b:{
+    name:"19番道路・旧市街外縁",
+    rows:[
+      "TTTTTTTTTTTT",
+      "TUUU....UUUT",
+      "TUU.PPPP.UUT",
+      "T...P..P...T",
+      "EPPPP..PPPPE",
+      "T..P....P..T",
+      "T..PPPPPP..T",
+      "T....P.....T",
+      "TUU..P..UUUT",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:10,y:5},
+    npcs:[
+      {x:7,y:3,name:"保守作業員",text:"地下には使われなくなった旧連絡通路がある。今はポケモンの巣になってるよ。"},
+      {x:3,y:6,name:"エリートトレーナー",text:"リーグ前でも寄り道する余裕があるか試してやる！",flag:"route19BTrainer"}
+    ],
+    exits:[
+      {x:11,y:4,to:"route19",tx:1,ty:4,msg:"東へ戻り、19番道路前半へ出た。"},
+      {x:0,y:4,to:"suimon",tx:10,ty:5,msg:"西へ抜け、スイモンタウンへ到着した。"},
+      {x:5,y:9,to:"oldUnderground",tx:5,ty:1,msg:"旧地下連絡路へ降りた。"}
+    ],
+    signs:[{x:5,y:8,text:"↓ 寄り道：旧地下連絡路"}]
+  },
+  oldUnderground:{
+    name:"旧地下連絡路（名古屋地下街モチーフ）",
+    rows:[
+      "WWWWWEWWWWWW",
+      "W..PPPPPP..W",
+      "W..P....P..W",
+      "WPPP.RR.PPPW",
+      "W.P..PP..P.W",
+      "W.P..PP..P.W",
+      "WPPP.RR.PPPW",
+      "W..PPPPPP..W",
+      "W..........W",
+      "WWWWWWWWWWWW"
+    ],
+    start:{x:5,y:1},
+    npcs:[
+      {x:4,y:4,name:"古い案内板",text:"『ヒカリ地下連絡路』の文字が薄く残っている。"},
+      {x:8,y:7,name:"保守箱",text:"非常用の道具が入っている。",flag:"undergroundItem"}
+    ],
+    exits:[{x:5,y:0,to:"route19b",tx:5,ty:8,msg:"旧市街外縁へ戻った。"}],
+    signs:[]
+  },
+
+  route20b:{
+    name:"20番道路・石門峡",
+    rows:[
+      "TTTTTTTTTTTT",
+      "TGGG....GGGT",
+      "T..S.PP.S..T",
+      "T.PPPPPPPP.T",
+      "EPP.S..S.PPE",
+      "T.P.PPPP.P.T",
+      "T.P.S..S.P.T",
+      "T.PPPPPPPP.T",
+      "TGG....GGGGT",
+      "TTTTTTTTTTTT"
+    ],
+    start:{x:10,y:5},
+    npcs:[
+      {x:7,y:3,name:"リーグ挑戦者",text:"この峡谷を抜ければセキガネはら。寄り道の遺跡も最後の腕試しだ。",flag:"route20BTrainer"},
+      {x:3,y:7,name:"研究者",text:"北の石門はリーグより古い。誰が造ったのか分かっていない。"}
+    ],
+    exits:[
+      {x:11,y:4,to:"route20",tx:1,ty:4,msg:"東へ戻り、20番道路前半へ出た。"},
+      {x:0,y:4,to:"sekigane",tx:10,ty:5,msg:"峡谷を抜け、セキガネはらへ到着した。"},
+      {x:5,y:0,to:"stoneRuins",tx:5,ty:8,msg:"古い石門をくぐり、遺跡へ入った。"}
+    ],
+    signs:[{x:5,y:1,text:"↑ 寄り道：石門遺跡"}]
+  },
+  stoneRuins:{
+    name:"石門遺跡",
+    rows:[
+      "WWWWWWWWWWWW",
+      "W.S.S..S.S.W",
+      "W..PPPPPP..W",
+      "W..P.S..P..W",
+      "WPPP.S..PPPW",
+      "W.P..SS..P.W",
+      "W.PPPPPPPP.W",
+      "W....P.....W",
+      "W....P.....W",
+      "WWWWWEWWWWWW"
+    ],
+    start:{x:5,y:8},
+    npcs:[
+      {x:5,y:3,name:"古代碑文",text:"二つの感情を表す意匠が、左右対称に刻まれている。"},
+      {x:8,y:6,name:"供物台",text:"古い回復道具が供えられている。",flag:"stoneRuinsItem"}
+    ],
+    exits:[{x:5,y:9,to:"route20b",tx:5,ty:1,msg:"石門峡へ戻った。"}],
+    signs:[]
+  },
+
   kiso:{
     name:"キソノタウン",
     rows:[
@@ -809,7 +1317,7 @@ const maps = {
       {x:7,y:4,name:"少女",text:"守護者って、本当は悪いポケモンじゃないのかな？"}
     ],
     exits:[
-      {x:0,y:4,to:"route4",tx:10,ty:4,msg:"西へ進み、4番道路へ戻った。"},
+      {x:0,y:4,to:"route4b",tx:10,ty:5,msg:"西へ進み、木曽古道へ戻った。"},
       {x:5,y:9,to:"route5",tx:5,ty:1,msg:"北東の山道へ進み、5番道路に入った。",require:"friend2",deny:"親友が勝負を待っている。先に話しかけよう。"},
       {x:3,y:3,to:"kisoLodge",tx:5,ty:8,msg:"山小屋に入った。"},
       {x:8,y:3,to:"kisoCenter",tx:5,ty:8,msg:"キソポケモンセンターに入った。"}
@@ -843,7 +1351,7 @@ const maps = {
       {x:9,y:3,name:"ピクニックガール",text:"安曇の風景もいいけど、勝負も楽しもう！",flag:"route5TrainerC"}    ],
     exits:[
       {x:5,y:0,to:"kiso",tx:5,ty:8,msg:"南西へ戻り、キソノタウンへ着いた。"},
-      {x:5,y:9,to:"azumi",tx:5,ty:1,msg:"北東へ進み、アズミシティへ到着した。"}
+      {x:5,y:9,to:"route5b",tx:5,ty:1,msg:"北東へ進み、5番道路・安曇渓谷へ入った。"}
     ],
     signs:[
       {x:5,y:1,text:"↓ 南西：キソノタウン"},
@@ -873,7 +1381,7 @@ const maps = {
       {x:8,y:6,name:"観光客",text:"山の方で黒いスーツの人を何度か見たよ。観光客には見えなかったな。"}
     ],
     exits:[
-      {x:5,y:9,to:"route5",tx:5,ty:8,msg:"南西へ進み、5番道路へ戻った。"},
+      {x:5,y:9,to:"route5b",tx:5,ty:8,msg:"南西へ進み、安曇渓谷へ戻った。"},
       {x:3,y:3,to:"azumiGym",tx:5,ty:8,msg:"アズミジムに入った。"},
       {x:0,y:4,to:"route6",tx:10,ty:4,msg:"西へ進み、6番道路に入った。",require:"rival1",deny:"ガチライバルが待っている。先に話しかけよう。"},
       {x:11,y:4,to:"route7",tx:1,ty:4,msg:"東へ進み、7番道路に入った。",require:"rival1",deny:"ガチライバルが待っている。先に話しかけよう。"},
@@ -939,7 +1447,7 @@ const maps = {
       {x:9,y:3,name:"バックパッカー",text:"西へ行くほど地面が乾いてくるね。勝負しよう！",flag:"route6TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"azumi",tx:1,ty:4,msg:"東へ戻り、アズミシティへ着いた。"},
-      {x:0,y:4,to:"senkou",tx:10,ty:5,msg:"西へ進み、センコウシティへ到着した。"}
+      {x:0,y:4,to:"route6b",tx:10,ty:5,msg:"西へ進み、6番道路・鉱山麓へ入った。"}
     ],
     signs:[
       {x:9,y:4,text:"→ 東：アズミシティ"},
@@ -966,10 +1474,10 @@ const maps = {
       {x:8,y:5,name:"農家",text:"金のリンゴは数年に一度しか実らない。昔は大きなポケモンが食べに来たそうだよ。"},
       {x:5,y:4,name:"ジムスタッフ",text:"ゲンゾウさんは地面タイプの使い手です。"},
       {x:7,y:6,name:"ロザ",text:"なんで金のリンゴが実ってないのよ！ ……あんた、邪魔しないで！",flag:"roza1"},
-      {x:3,y:6,name:"古株の住民",text:"あの果実が実らない年は、山が妙に静かなんだ。"}
-    ],
+      {x:3,y:6,name:"古株の住民",text:"あの果実が実らない年は、山が妙に静かなんだ。"},
+      {x:9,y:7,name:"鉱夫の子ども",text:"父ちゃんはイシツブテの鳴き声で岩の状態がわかるんだって。ぼくも練習中！"}],
     exits:[
-      {x:0,y:5,to:"route6",tx:1,ty:4,msg:"東へ進み、6番道路へ戻った。"},
+      {x:0,y:5,to:"route6b",tx:1,ty:5,msg:"東へ進み、鉱山麓へ戻った。"},
       {x:3,y:3,to:"senkouGym",tx:5,ty:8,msg:"センコウジムに入った。"},
       {x:8,y:3,to:"senkouOrchard",tx:5,ty:8,msg:"金のリンゴ果樹園に入った。"},
       {x:3,y:8,to:"senkouCenter",tx:5,ty:8,msg:"センコウポケモンセンターに入った。"}
@@ -1056,8 +1564,8 @@ const maps = {
       {x:8,y:5,name:"釣り人",text:"湖の魚が急にいなくなる夜がある。巨大な何かが通った後みたいにな。"},
       {x:5,y:4,name:"ジムスタッフ",text:"レイカさんはどくタイプ。口はキツいけど本気で街を守っています。"},
       {x:7,y:6,name:"ミレイ",text:"闇のブドウ、ないなら仕方ないか〜。……あれ？ 君、誰？",flag:"mirei1"},
-      {x:3,y:6,name:"薬草師",text:"毒は使い方次第で薬にもなる。守護者の『疫病』も似た話なのかもしれないね。"}
-    ],
+      {x:3,y:6,name:"薬草師",text:"毒は使い方次第で薬にもなる。守護者の『疫病』も似た話なのかもしれないね。"},
+      {x:9,y:7,name:"果樹園の少年",text:"毒のある実でも、ポケモンによってはごちそうなんだ。人間の物差しだけじゃ測れないね。"}],
     exits:[
       {x:0,y:5,to:"route7",tx:10,ty:4,msg:"西へ進み、7番道路へ戻った。"},
       {x:3,y:3,to:"tsuruneGym",tx:5,ty:8,msg:"ツルネジムに入った。"},
@@ -1283,7 +1791,7 @@ const maps = {
       {x:9,y:3,name:"かいパンやろう",text:"海岸トレーニングの成果を見せるぜ！",flag:"route9TrainerC"}    ],
     exits:[
       {x:5,y:0,to:"tenryu",tx:5,ty:8,msg:"北へ戻り、テンリュウタウンへ着いた。"},
-      {x:5,y:9,to:"shionagi",tx:5,ty:1,msg:"南へ進み、シオナギシティへ到着した。"}
+      {x:5,y:9,to:"route9b",tx:5,ty:1,msg:"海風の強い崖道へ進み、9番道路・海食崖に入った。"}
     ],
     signs:[
       {x:5,y:1,text:"↑ 北：テンリュウタウン"},
@@ -1309,10 +1817,10 @@ const maps = {
       {x:2,y:5,name:"漁師",text:"沖で白い大きな影を見たことがある。襲われたことは一度もないよ。",flag:"shioFishingQuest"},
       {x:8,y:5,name:"港の作業員",text:"ユノハナ方面へ資材を運ぶ黒い船が増えた。送り主の会社名は見たことがない。"},
       {x:5,y:4,name:"ジムスタッフ",text:"カイトさんは今、ユノハナ方面の妙な施設を調べています。"},
-      {x:7,y:6,name:"海辺の老人",text:"昔、白い影と黒い影が同じ場所を泳いでいたと祖父から聞いたよ。"}
-    ],
+      {x:7,y:6,name:"海辺の老人",text:"昔、白い影と黒い影が同じ場所を泳いでいたと祖父から聞いたよ。"},
+      {x:9,y:7,name:"船乗り",text:"海が静かな日は遠くの島影が見える。昔は『消える島』なんて呼ばれてたな。"}],
     exits:[
-      {x:5,y:0,to:"route9",tx:5,ty:8,msg:"北へ進み、9番道路へ戻った。"},
+      {x:5,y:0,to:"route9b",tx:5,ty:8,msg:"北へ進み、海食崖へ戻った。"},
       {x:11,y:5,to:"route10",tx:1,ty:5,msg:"東へ進み、10番道路に入った。"},
       {x:0,y:7,to:"route11",tx:10,ty:4,msg:"西へ進み、11番道路に入った。"},
       {x:3,y:3,to:"shionagiGym",tx:5,ty:8,msg:"シオナギジムに入った。",require:"yunoChecked",deny:"カイトは不在だ。先にユノハナ方面を調べよう。"},
@@ -1620,7 +2128,7 @@ const maps = {
       {x:9,y:3,name:"調査員",text:"調査隊でもポケモン勝負の腕は必要なんです。",flag:"route14TrainerB"}    ],
     exits:[
       {x:0,y:4,to:"hikari",tx:1,ty:7,msg:"南東へ戻り、ヒカリシティへ着いた。"},
-      {x:5,y:0,to:"yuragi",tx:5,ty:8,msg:"北西へ進み、ユラギタウンへ到着した。"}
+      {x:5,y:0,to:"route14b",tx:5,ty:8,msg:"山へ分け入り、14番道路・飛騨古道に入った。"}
     ],
     signs:[
       {x:2,y:4,text:"← 南東：ヒカリシティ"},
@@ -1649,7 +2157,7 @@ const maps = {
       {x:7,y:6,name:"若い登山客",text:"結界のせいで登山道は閉鎖中。でも洞窟だけは通れるんだって。"}
     ],
     exits:[
-      {x:5,y:9,to:"route14",tx:5,ty:1,msg:"南東へ進み、14番道路へ戻った。"},
+      {x:5,y:9,to:"route14b",tx:5,ty:1,msg:"南東へ進み、飛騨古道へ戻った。"},
       {x:5,y:0,to:"hidaCave1",tx:5,ty:8,msg:"北へ進み、飛騨山脈の洞窟へ入った。",require:"gym5",deny:"なみのりが使えないと、この先の地下水路は越えられない。"},
       {x:3,y:3,to:"yuragiLodge",tx:5,ty:8,msg:"登山者用ロッジに入った。"}
     ],
@@ -1763,7 +2271,7 @@ const maps = {
       {x:9,y:3,name:"旅のトレーナー",text:"雪道では判断の速さが大事だよ。",flag:"route15TrainerB"}    ],
     exits:[
       {x:5,y:9,to:"hidaRuins",tx:5,ty:1,msg:"南へ戻り、飛騨山脈の遺跡へ入った。"},
-      {x:5,y:0,to:"yukinagi",tx:5,ty:8,msg:"北へ進み、ユキナギタウンへ到着した。"}
+      {x:5,y:0,to:"route15b",tx:5,ty:8,msg:"雪深い谷へ進み、15番道路・雪谷に入った。"}
     ],
     signs:[{x:5,y:1,text:"↑ 北：ユキナギタウン"}]
   },
@@ -1790,7 +2298,7 @@ const maps = {
       {x:3,y:6,name:"レント",text:"第7バッジと博物館の情報が揃ったら、ここで作戦を立てよう。",flag:"strategyMeeting"}
     ],
     exits:[
-      {x:5,y:9,to:"route15",tx:5,ty:1,msg:"南へ進み、15番道路へ戻った。"},
+      {x:5,y:9,to:"route15b",tx:5,ty:1,msg:"南へ進み、雪谷へ戻った。"},
       {x:0,y:4,to:"route16",tx:10,ty:4,msg:"西へ進み、16番道路に入った。"},
       {x:11,y:4,to:"route18",tx:1,ty:4,msg:"東へ進み、18番道路に入った。"},
       {x:5,y:0,to:"hikariReturn",tx:5,ty:8,msg:"南部へ戻り、ヒカリシティへ急行した。",require:"strategyMeeting",deny:"作戦会議を終えてからヒカリへ戻ろう。"},
@@ -2111,8 +2619,8 @@ const maps = {
       {x:2,y:5,name:"屋敷の使用人",text:"セリナ様、普段は静かなのに勝負になると少し楽しそうなんです。",flag:"setsugetsuHouseQuest"},
       {x:8,y:5,name:"学生",text:"外は怖いけど、ジムが開いてるといつも通りって感じがして落ち着く。"},
       {x:5,y:4,name:"ジムスタッフ",text:"セリナ様が挑戦者をお待ちです。"},
-      {x:7,y:6,name:"雪かきの男性",text:"結界が出た日から雪の降り方がおかしい。自然の天気じゃない気がするよ。"}
-    ],
+      {x:7,y:6,name:"雪かきの男性",text:"結界が出た日から雪の降り方がおかしい。自然の天気じゃない気がするよ。"},
+      {x:9,y:7,name:"雪かきの人",text:"雪の日は音が吸い込まれて街が静かになる。ユキメノコの声だけ遠くまで響くんだ。"}],
     exits:[
       {x:0,y:5,to:"route18",tx:10,ty:4,msg:"西へ進み、18番道路へ戻った。"},
       {x:3,y:3,to:"setsugetsuGym",tx:5,ty:8,msg:"セツゲツジムに入った。"},
@@ -2466,7 +2974,7 @@ const maps = {
       {x:9,y:3,name:"ベテラントレーナー",text:"リーグ前の仕上がりを見せてくれ。",flag:"route19TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"hikariLeague",tx:1,ty:4,msg:"東へ戻り、ヒカリシティへ着いた。"},
-      {x:0,y:4,to:"suimon",tx:10,ty:5,msg:"西へ進み、スイモンタウンへ到着した。",require:"route19Battle",deny:"ベテラントレーナーが勝負を待っている。"}
+      {x:0,y:4,to:"route19b",tx:10,ty:5,msg:"西へ進み、19番道路・旧市街外縁へ入った。",require:"route19Battle",deny:"ベテラントレーナーが勝負を待っている。"}
     ],
     signs:[
       {x:9,y:4,text:"→ 東：ヒカリシティ"},
@@ -2494,7 +3002,7 @@ const maps = {
       {x:7,y:6,name:"老人",text:"昔からリーグへ向かう者は、この町で一晩休むんじゃ。"}
     ],
     exits:[
-      {x:11,y:4,to:"route19",tx:1,ty:4,msg:"東へ進み、19番道路へ戻った。"},
+      {x:11,y:4,to:"route19b",tx:1,ty:5,msg:"東へ進み、旧市街外縁へ戻った。"},
       {x:0,y:4,to:"route20",tx:10,ty:4,msg:"西へ進み、20番道路へ入った。"},
       {x:3,y:3,to:"suimonInn",tx:5,ty:8,msg:"スイモン宿屋に入った。"},
       {x:8,y:3,to:"suimonCenter",tx:5,ty:8,msg:"スイモンポケモンセンターに入った。"}
@@ -2528,7 +3036,7 @@ const maps = {
       {x:9,y:3,name:"エリートトレーナー",text:"チャンピオンロード直前の最終チェックだ！",flag:"route20TrainerC"}    ],
     exits:[
       {x:11,y:4,to:"suimon",tx:1,ty:4,msg:"東へ戻り、スイモンタウンへ着いた。"},
-      {x:0,y:4,to:"sekigane",tx:10,ty:5,msg:"西へ進み、セキガネはらへ到着した。"}
+      {x:0,y:4,to:"route20b",tx:10,ty:5,msg:"西へ進み、20番道路・石門峡へ入った。"}
     ],
     signs:[
       {x:9,y:4,text:"→ 東：スイモンタウン"},
@@ -2556,7 +3064,7 @@ const maps = {
       {x:7,y:6,name:"登山家",text:"洞窟内は長い。回復道具は多めに持っていけ。"}
     ],
     exits:[
-      {x:11,y:5,to:"route20",tx:1,ty:4,msg:"東へ進み、20番道路へ戻った。"},
+      {x:11,y:5,to:"route20b",tx:1,ty:5,msg:"東へ進み、石門峡へ戻った。"},
       {x:5,y:0,to:"championRoad",tx:5,ty:8,msg:"北西へ折れ、チャンピオンロードへ入った。"}
     ],
     signs:[
@@ -2584,10 +3092,60 @@ const maps = {
     ],
     exits:[
       {x:5,y:9,to:"sekigane",tx:5,ty:1,msg:"セキガネはらへ戻った。"},
-      {x:5,y:0,to:"leagueGate",tx:5,ty:8,msg:"チャンピオンロードを抜け、アルシアリーグへ到着した。",require:"rivalFinal",deny:"ガチライバルが最後の勝負を待っている。"}
+      {x:5,y:0,to:"championRoad2",tx:5,ty:8,msg:"チャンピオンロード2Fへ上がった。",require:"rivalFinal",deny:"ガチライバルが最後の勝負を待っている。"}
     ],
     signs:[{x:5,y:1,text:"↑ アルシアリーグ"}]
   },
+
+  championRoad2:{
+    name:"チャンピオンロード 2F",
+    rows:[
+      "WWWWWEWWWWWW",
+      "W..HHHHH...W",
+      "W..HAA.H...W",
+      "W..HPP.H...W",
+      "WPPHPPPHPPPW",
+      "W..HQQ.H...W",
+      "W..HAA.H...W",
+      "W....P.....W",
+      "W....P.....W",
+      "WWWWWEWWWWWW"
+    ],
+    start:{x:5,y:8},
+    npcs:[
+      {x:3,y:4,name:"エリートトレーナー",text:"ここからは高低差も戦術のうちだ。リーグに近道はない！",flag:"champRoad2Trainer"}
+    ],
+    exits:[
+      {x:5,y:9,to:"championRoad",tx:5,ty:1,msg:"チャンピオンロード1Fへ戻った。"},
+      {x:5,y:0,to:"championRoad3",tx:5,ty:8,msg:"最上層へ進んだ。"}
+    ],
+    signs:[{x:5,y:1,text:"↑ 最上層"}]
+  },
+  championRoad3:{
+    name:"チャンピオンロード 3F・石柱回廊",
+    rows:[
+      "WWWWWEWWWWWW",
+      "W.S.S..S.S.W",
+      "W..PPPPPP..W",
+      "W..P.S..P..W",
+      "WPPP.S..PPPW",
+      "W.P..SS..P.W",
+      "W.PPPPPPPP.W",
+      "W....P.....W",
+      "W....P.....W",
+      "WWWWWEWWWWWW"
+    ],
+    start:{x:5,y:8},
+    npcs:[
+      {x:8,y:6,name:"最後の挑戦者",text:"この石柱を越えた先がリーグだ。悔いのない勝負をしよう。",flag:"champRoad3Trainer"}
+    ],
+    exits:[
+      {x:5,y:9,to:"championRoad2",tx:5,ty:1,msg:"2Fへ戻った。"},
+      {x:5,y:0,to:"leagueGate",tx:5,ty:8,msg:"石柱回廊を抜け、アルシアリーグへ到着した。"}
+    ],
+    signs:[{x:5,y:2,text:"古代石柱。歴代の挑戦者がここを通ってリーグへ向かった。"}]
+  },
+
   leagueGate:{
     name:"アルシアリーグ",
     rows:[
@@ -3309,7 +3867,7 @@ const maps = {
     start:{x:10,y:5},
     npcs:[{x:5,y:3,name:"カイト",text:"今度は救助も調査もなし！ 純粋に勝負だ！",flag:"rematchKaito"}],
     exits:[{x:5,y:9,to:"rematchSecondHub",tx:1,ty:6,msg:"強化再戦案内所へ戻った。"}],
-    signs:[{x:5,y:1,text:"ペリッパー / ランターン / カマスジョー / ラグラージ / ウォッシュロトム / イルカマン"}]
+    signs:[{x:5,y:1,text:"ペリッパー / ランターン / カマスジョー / ウォッシュロトム / ミロカロス / アミダコ"}]
   },
   rematchTetsuji:{
     name:"テツジ 強化再戦",
@@ -3317,7 +3875,7 @@ const maps = {
     start:{x:1,y:5},
     npcs:[{x:5,y:3,name:"テツジ",text:"仕上げたぞ！ ぶつけて確かめるのが一番だ！",flag:"rematchTetsuji"}],
     exits:[{x:5,y:9,to:"rematchSecondHub",tx:10,ty:6,msg:"強化再戦案内所へ戻った。"}],
-    signs:[{x:5,y:1,text:"トリデプス / ドータクン / デカヌチャン / ジバコイル / ドリュウズ / ハッサム"}]
+    signs:[{x:5,y:1,text:"トリデプス / ドータクン / デカヌチャン / ジバコイル / ギルガルド / ロウガネン"}]
   },
   rematchSerina:{
     name:"セリナ 強化再戦",
@@ -3333,7 +3891,7 @@ const maps = {
     start:{x:1,y:5},
     npcs:[{x:5,y:3,name:"レント",text:"チャンピオンになった君に、今度は俺が挑戦するつもりでいく。",flag:"rematchRento"}],
     exits:[{x:5,y:9,to:"rematchNorthHub",tx:10,ty:3,msg:"強化再戦案内所へ戻った。"}],
-    signs:[{x:5,y:1,text:"タイカイデン / ジバコイル / シビルドン / ハラバリー / ロトム草 / ゼラオラ"}]
+    signs:[{x:5,y:1,text:"タイカイデン / ジバコイル / シビルドン / ハラバリー / ヨミミズク / ゼラオラ"}]
   },
   eliteRematchGate:{
     name:"リーグ強化再戦",
@@ -3782,6 +4340,17 @@ const MOVES = {
   "まもる":{type:"ノーマル",category:"変化",power:0,pp:10,priority:4,protect:true},
   "ステルスロック":{type:"いわ",category:"変化",power:0,pp:20,hazard:"stealthRock"},
   "トリックルーム":{type:"エスパー",category:"変化",power:0,pp:5,priority:-7,trickRoom:true}
+  ,"エアスラッシュ":{type:"ひこう",category:"特殊",power:75,pp:15}
+  ,"サイコキネシス":{type:"エスパー",category:"特殊",power:90,pp:10}
+  ,"さいみんじゅつ":{type:"エスパー",category:"変化",power:0,pp:20,accuracy:.60,status:"ねむり",statusChance:1}
+
+  ,"ウッドハンマー":{type:"くさ",category:"物理",power:120,pp:15,recoil:.33}
+  ,"もろはのずつき":{type:"いわ",category:"物理",power:150,pp:5,recoil:.5}
+  ,"アイアンヘッド":{type:"はがね",category:"物理",power:80,pp:15}
+  ,"ねっぷう":{type:"ほのお",category:"特殊",power:95,pp:10,status:"やけど",statusChance:.1}
+  ,"アクアテール":{type:"みず",category:"物理",power:90,pp:10}
+  ,"ラスターショット":{type:"はがね",category:"特殊",power:80,pp:10}
+
 };
 
 const ABILITIES = {
@@ -3795,6 +4364,13 @@ const ABILITIES = {
   "ちょすい":{desc:"みず技を無効化して回復"},
   "どくのトゲ":{desc:"接触を受けると30%でどく"},
   "プレッシャー":{desc:"相手の技PP消費+1"},
+  "やまみはり":{desc:"相手が交代すると特攻と命中が1段階上がる"},
+
+  "みちしるべ":{desc:"登場時に自分の素早さを1段階上げる"},
+  "せいれんろ":{desc:"ほのお技を無効化し、防御と特攻を1段階上げる"},
+  "あみさばき":{desc:"素早さが下がった相手への技が1.3倍"},
+  "ぎたいじゅ":{desc:"場に出て最初に受ける弱点技のダメージを半減"},
+
   "なし":{desc:"特別な効果なし"}
 };
 
@@ -3914,6 +4490,58 @@ const SPECIES = {
   ,"カイリキー":{types:["かくとう"],baseHp:38,atk:17,spe:7,ability:"なし",held:"なし",moves:["からてチョップ","はっけい","いわおとし","つるぎのまい"]}
   ,"エルレイド":{types:["エスパー","かくとう"],baseHp:31,atk:16,spe:12,ability:"なし",held:"なし",moves:["サイケこうせん","はっけい","つるぎのまい","まもる"]}
 
+  ,"ヨルノズク":{
+    types:["ノーマル","ひこう"],baseHp:34,atk:8,spe:11,ability:"ふみん",held:"なし",
+    baseStats:{hp:100,atk:50,def:50,spa:86,spd:96,spe:70},
+    moves:["かぜおこし","ねんりき","サイケこうせん","さいみんじゅつ"]
+  }
+  ,"ヨミミズク":{
+    types:["ひこう","エスパー"],baseHp:36,atk:8,spe:13,ability:"やまみはり",held:"なし",
+    baseStats:{hp:105,atk:50,def:65,spa:105,spd:115,spe:80},
+    moves:["エアスラッシュ","サイコキネシス","さいみんじゅつ","まもる"]
+  }
+
+  ,"オオタチ":{
+    types:["ノーマル"],baseHp:31,atk:12,spe:15,ability:"おみとおし",held:"なし",
+    baseStats:{hp:85,atk:76,def:64,spa:45,spd:55,spe:90},
+    moves:["でんこうせっか","かみつく","じならし","まもる"]
+  }
+  ,"ミチタチ":{
+    types:["ノーマル","じめん"],baseHp:34,atk:15,spe:18,ability:"みちしるべ",held:"なし",
+    baseStats:{hp:95,atk:96,def:84,spa:45,spd:75,spe:110},
+    moves:["でんこうせっか","じならし","かみつく","まもる"]
+  }
+  ,"マグカルゴ":{
+    types:["ほのお","いわ"],baseHp:28,atk:8,spe:5,ability:"ほのおのからだ",held:"なし",
+    baseStats:{hp:60,atk:50,def:120,spa:90,spd:80,spe:30},
+    moves:["ひのこ","いわおとし","ラスターカノン","ねっぷう"]
+  }
+  ,"ロウガネン":{
+    types:["ほのお","はがね"],baseHp:31,atk:10,spe:5,ability:"せいれんろ",held:"なし",
+    baseStats:{hp:75,atk:60,def:145,spa:105,spd:105,spe:30},
+    moves:["ねっぷう","ラスターカノン","いわおとし","まもる"]
+  }
+  ,"オクタン":{
+    types:["みず"],baseHp:31,atk:16,spe:7,ability:"スナイパー",held:"なし",
+    baseStats:{hp:75,atk:105,def:75,spa:105,spd:75,spe:45},
+    moves:["みずのはどう","アクアテール","サイケこうせん","まもる"]
+  }
+  ,"アミダコ":{
+    types:["みず","はがね"],baseHp:32,atk:17,spe:8,ability:"あみさばき",held:"なし",
+    baseStats:{hp:80,atk:115,def:80,spa:115,spd:85,spe:50},
+    moves:["アクアテール","ラスターショット","みずのはどう","まもる"]
+  }
+  ,"ウソッキー":{
+    types:["いわ"],baseHp:30,atk:16,spe:5,ability:"いしあたま",held:"なし",
+    baseStats:{hp:70,atk:100,def:115,spa:30,spd:65,spe:30},
+    moves:["いわおとし","もろはのずつき","じならし","まもる"]
+  }
+  ,"ギタイボク":{
+    types:["いわ","くさ"],baseHp:34,atk:18,spe:6,ability:"ぎたいじゅ",held:"なし",
+    baseStats:{hp:90,atk:125,def:140,spa:30,spd:90,spe:40},
+    moves:["もろはのずつき","ウッドハンマー","じならし","まもる"]
+  }
+
 };
 
 
@@ -3931,7 +4559,12 @@ const EVOLUTIONS = {
   "ウパー":{level:20,to:"ヌオー"},
   "ポッポ":{level:18,to:"ピジョン"},
   "ピジョン":{level:36,to:"ピジョット"},
-  "サンド":{level:22,to:"サンドパン"}
+  "サンド":{level:22,to:"サンドパン"},
+  "ヨルノズク":{level:36,to:"ヨミミズク",maps:["mountainShrinePath"],night:true},
+  "オオタチ":{level:32,to:"ミチタチ",maps:["oldPostTown"]},
+  "マグカルゴ":{level:38,to:"ロウガネン",maps:["abandonedMineB2"]},
+  "オクタン":{level:38,to:"アミダコ",maps:["seaCaveLower"]},
+  "ウソッキー":{level:35,to:"ギタイボク",maps:["route4b","oldPostTown"]}
 };
 
 const LEVEL_MOVES = {
@@ -3950,12 +4583,22 @@ const LEVEL_MOVES = {
   "モココ":[[20,"スパーク"]],
   "ウパー":[[10,"どろかけ"],[18,"じならし"]],
   "ポッポ":[[9,"つばさでうつ"]],
-  "サンド":[[10,"どろかけ"],[18,"じならし"]]
+  "サンド":[[10,"どろかけ"],[18,"じならし"]],
+  "ヨルノズク":[[24,"サイケこうせん"],[32,"さいみんじゅつ"]],
+  "ヨミミズク":[[36,"エアスラッシュ"],[42,"サイコキネシス"]],
+  "オオタチ":[[24,"かみつく"],[30,"じならし"]],
+  "ミチタチ":[[32,"じならし"]],
+  "マグカルゴ":[[30,"いわおとし"],[36,"ねっぷう"]],
+  "ロウガネン":[[38,"ラスターカノン"]],
+  "オクタン":[[28,"アクアテール"],[34,"サイケこうせん"]],
+  "アミダコ":[[38,"ラスターショット"]],
+  "ウソッキー":[[28,"いわおとし"],[34,"もろはのずつき"]],
+  "ギタイボク":[[35,"ウッドハンマー"]]
 };
 
 const DEX_ORDER = [
   "コノレサ","モリレサ","フォレッサル","ヒコラ","マグライガ","カザンガ","ミズカバ","カバール","ダムガバ",
-  "ムックル","ムクバード","ムクホーク","メリープ","モココ","デンリュウ","ウパー","ヌオー","ポッポ","ピジョン","ピジョット",
+  "ムックル","ムクバード","ムクホーク","メリープ","モココ","デンリュウ","ウパー","ヌオー","ポッポ","ピジョン","ピジョット","ヨルノズク","ヨミミズク","オオタチ","ミチタチ","マグカルゴ","ロウガネン","オクタン","アミダコ","ウソッキー","ギタイボク",
   "サンド","サンドパン","イシツブテ","ロゼリア","キャモメ","デルビル","ニューラ","スノーバー","クマシュン","タマザラシ",
   "ノズパス","プテラ","チルタリス","ドオー","スカタンク","オオニューラ","ペリッパー","ランターン","カマスジョー","イルカマン",
   "トリデプス","ドータクン","デカヌチャン","ハッサム","ユキノオー","マンムー","モスノウ","ユキメノコ",
@@ -3993,6 +4636,29 @@ const WILD_TABLES = {
   route15:["スノーバー","クマシュン","ニューラ"],
   route16:["スノーバー","クマシュン","タマザラシ","ニューラ"],
   route18:["スノーバー","クマシュン","ニューラ"]
+  ,"route4b":["イシツブテ","サンド","ムックル","デルビル","ウソッキー"]
+  ,"oldPostTown":["ムックル","ニューラ","デルビル","オオタチ","ウソッキー"]
+  ,"route5b":["ムックル","キャモメ","ロゼリア","メリープ"]
+  ,"ravineLower":["ウパー","キャモメ","ランターン"]
+  ,"route6b":["サンド","イシツブテ","ドータクン","デルビル"]
+  ,"abandonedMine":["イシツブテ","ドータクン","ニューラ"]
+  ,"route9b":["キャモメ","ランターン","ウパー","ペリッパー"]
+  ,"seaCave":["キャモメ","ランターン","ウパー","ミロカロス"]
+  ,"route14b":["ニューラ","イシツブテ","ロゼリア","ムクホーク"]
+  ,"mountainShrinePath":["ニューラ","ロゼリア","ドータクン"]
+  ,"route15b":["スノーバー","クマシュン","ニューラ","タマザラシ"]
+  ,"snowVillageRuins":["ユキメノコ","スノーバー","ニューラ"]
+  ,"route19b":["ルカリオ","ニンフィア","ジバコイル","ムクホーク"]
+  ,"oldUnderground":["ドータクン","ジバコイル","ポリゴンZ","ニューラ"]
+  ,"route20b":["ルカリオ","ガブリアス","ニンフィア","マンムー"]
+  ,"stoneRuins":["ドータクン","ギルガルド","ルカリオ"]
+
+  ,"abandonedMineB1":["イシツブテ","ドータクン","ニューラ","サンド"]
+  ,"abandonedMineB2":["ドータクン","ギルガルド","ニューラ","マグカルゴ"]
+  ,"seaCaveLower":["ランターン","ウパー","ミロカロス","ペリッパー","オクタン"]
+  ,"championRoad2":["ルカリオ","マンムー","ガブリアス","ドータクン"]
+  ,"championRoad3":["ルカリオ","ギルガルド","ガブリアス","ボーマンダ"]
+
 };
 
 const TRAINERS = {
@@ -4115,6 +4781,19 @@ const TRAINERS = {
   ,eliteRematch4:{name:"強化四天王 ゴウ",team:[["オオニューラ",70],["カイリキー",70],["エルレイド",71],["ガチグマ(アカツキ)",71],["ルカリオ",72],["ハッサム",72]],reward:11000}
   ,hulkRematch:{name:"強化チャンピオン ハルク",team:[["ガブリアス",73],["ウォッシュロトム",73],["アーマーガア",74],["ウルガモス",74],["ニンフィア",75],["フロスティア",76]],reward:16000}
 
+  ,route4BTrainer:{name:"やまおとこ",team:[["イシツブテ",10],["サンド",10]],reward:380}
+  ,route5BTrainer:{name:"バードキーパー",team:[["ムックル",13],["キャモメ",13]],reward:460}
+  ,route6BTrainer:{name:"さぎょういん",team:[["イシツブテ",17],["ドータクン",17]],reward:600}
+  ,route9BTrainer:{name:"かいパンやろう",team:[["キャモメ",27],["ランターン",27]],reward:980}
+  ,route14BTrainer:{name:"山岳レンジャー",team:[["ニューラ",36],["ムクホーク",36]],reward:1350}
+  ,route15BTrainer:{name:"スノーハイカー",team:[["クマシュン",39],["スノーバー",39]],reward:1420}
+  ,route19BTrainer:{name:"エリートトレーナー",team:[["ルカリオ",53],["ジバコイル",53]],reward:2500}
+  ,route20BTrainer:{name:"リーグ挑戦者",team:[["ガブリアス",56],["ニンフィア",56]],reward:2800}
+
+  ,mineB1Trainer:{name:"ベテラン作業員",team:[["ドータクン",20],["イシツブテ",20]],reward:750}
+  ,champRoad2Trainer:{name:"エリートトレーナー",team:[["マンムー",58],["ルカリオ",58]],reward:3200}
+  ,champRoad3Trainer:{name:"最後の挑戦者",team:[["ボーマンダ",59],["ギルガルド",59],["ガブリアス",60]],reward:3800}
+
 };
 
 const TM_DATA = {
@@ -4162,7 +4841,17 @@ const STAT_OVERRIDES = {
   "フロスティア":{atk:8,def:11,spa:19,spd:15,spe:16},
   "ルミナーク":{atk:15,def:16,spa:18,spd:17,spe:15},
   "ノクザーク":{atk:18,def:13,spa:18,spd:13,spe:19},
-  "シャルメイズ":{atk:8,def:11,spa:18,spd:11,spe:17}
+  "シャルメイズ":{atk:8,def:11,spa:18,spd:11,spe:17},
+  "ヨルノズク":{atk:8,def:8,spa:14,spd:15,spe:11},
+  "ヨミミズク":{atk:8,def:10,spa:16,spd:18,spe:13},
+  "オオタチ":{atk:12,def:10,spa:7,spd:9,spe:15},
+  "ミチタチ":{atk:15,def:13,spa:7,spd:12,spe:18},
+  "マグカルゴ":{atk:8,def:18,spa:14,spd:13,spe:5},
+  "ロウガネン":{atk:10,def:21,spa:16,spd:16,spe:5},
+  "オクタン":{atk:16,def:12,spa:16,spd:12,spe:7},
+  "アミダコ":{atk:17,def:13,spa:17,spd:14,spe:8},
+  "ウソッキー":{atk:16,def:18,spa:5,spd:11,spe:5},
+  "ギタイボク":{atk:18,def:21,spa:5,spd:14,spe:6}
 };
 function baseCombatStats(name,s){
   const o=STAT_OVERRIDES[name];
@@ -4315,7 +5004,17 @@ const DEX_FLAVOR = {
   "ダムガバ":"巨大な堰を築くほどの力を持つ。水害から集落を守った伝承もある。",
   "ルミナーク":"信頼や喜びの感情に強く反応する白い伝説のポケモン。",
   "ノクザーク":"疑念や怒りを敏感に感じ取る黒い伝説のポケモン。",
-  "フロスティア":"氷の結晶を冠のようにまとい、静かな夜にだけ姿を見せるという。"
+  "フロスティア":"氷の結晶を冠のようにまとい、静かな夜にだけ姿を見せるという。",
+  "ヨルノズク":"暗闇でもわずかな気配を見逃さない。アルシアの山村では夜の見張り役として親しまれる。",
+  "ヨミミズク":"人と共に夜の山道を見守り続けたヨルノズクが、飛騨山岳参道で進化した姿。遠く離れた遭難者の気配まで察知する。",
+  "オオタチ":"宿場や山道で人の荷物運びを手伝う。危険を感じると長い体を伸ばして仲間へ知らせる。",
+  "ミチタチ":"旅人と古道を歩き続けたオオタチが進化した姿。先回りして安全な道を見つける。",
+  "マグカルゴ":"高温の体を持ち、アルシアの鉱山では古くから鉱石を温める仕事を助けてきた。",
+  "ロウガネン":"鉱夫と共に製錬を続けたマグカルゴが進化した姿。体内は巨大な炉のように高温。",
+  "オクタン":"港町では漁師と協力して網を操る。器用な触腕で船上作業もこなす。",
+  "アミダコ":"漁業を支え続けたオクタンが進化した姿。鋼のように強い触腕で網と船を自在に操る。",
+  "ウソッキー":"木のふりをして身を隠すが、体は岩でできている。水を嫌う。",
+  "ギタイボク":"木曽古道で大木に擬態し続けたウソッキーが進化した姿。岩の体表には本物の苔や草が共生する。"
 };
 function habitatsForSpecies(name){
   const found=[];
@@ -4353,6 +5052,7 @@ function openDexDetail(name){
       <div class="detailBox"><b>生息地</b><br>${habitatsForSpecies(name)}</div>
       <div class="detailBox"><b>進化</b><br>${evolutionInfo(name)}</div>
       <div class="detailBox"><b>主な技</b><br>${(s?.moves||[]).join(" / ")||"不明"}</div>
+      ${s?.baseStats?`<div class="detailBox"><b>種族値</b><br>H${s.baseStats.hp} A${s.baseStats.atk} B${s.baseStats.def}<br>C${s.baseStats.spa} D${s.baseStats.spd} S${s.baseStats.spe}<br>合計 ${Object.values(s.baseStats).reduce((a,b)=>a+b,0)}</div>`:""}
     </div>`;
   dexDetailModal.classList.remove("hidden");
 }
@@ -4434,9 +5134,21 @@ function processLevelMoves(mon,oldLevel,newLevel,logs=[]){
   const list=LEVEL_MOVES[mon.name]||[];
   list.forEach(([lv,mv])=>{ if(lv>oldLevel && lv<=newLevel) teachMove(mon,mv,logs); });
 }
+
+function isNightTime(){
+  const h=new Date().getHours();
+  return h>=18 || h<6;
+}
+function evolutionConditionMet(mon,evo){
+  if(!evo || mon.level<evo.level) return false;
+  if(evo.maps && !evo.maps.includes(state.map)) return false;
+  if(evo.night && !isNightTime()) return false;
+  return true;
+}
+
 function evolveMon(mon,logs=[]){
   let evo=EVOLUTIONS[mon.name];
-  while(evo && mon.level>=evo.level){
+  while(evo && evolutionConditionMet(mon,evo)){
     const oldName=mon.name, newName=evo.to;
     const s=SPECIES[newName];
     if(!s) break;
@@ -4444,7 +5156,12 @@ function evolveMon(mon,logs=[]){
     mon.name=newName; mon.types=s.types; mon.ability=s.ability||mon.ability; mon.held=mon.held||s.held||"なし";
     mon.maxHp=s.baseHp+mon.level*2; mon.hp=Math.max(1,Math.round(mon.maxHp*hpRatio));
     refreshCombatStats(mon);
-    showEventBanner(`${oldName} → ${newName}`,900); logs.push(`${oldName}のようすが……！ ${newName}に進化した！`);
+    showEventBanner(`${oldName} → ${newName}`,900);
+    if(oldName==="ヨルノズク" && newName==="ヨミミズク"){
+      logs.push(`飛騨山岳参道の夜気に反応した！ ${oldName}は${newName}に進化した！`);
+    }else{
+      logs.push(`${oldName}のようすが……！ ${newName}に進化した！`);
+    }
     registerSeen(newName); registerCaught(newName); autosave("evolution");
     evo=EVOLUTIONS[mon.name];
   }
@@ -4646,7 +5363,11 @@ function wildLevelForMap(){
   return Math.max(2,Math.min(55,3 + Math.floor(routeNum*1.7)));
 }
 function randomWild(){
-  const table=WILD_TABLES[state.map] || ["ムックル","メリープ","ウパー"];
+  let table=[...(WILD_TABLES[state.map] || ["ムックル","メリープ","ウパー"])];
+  if(state.map==="mountainShrinePath" && isNightTime()){
+    // アルシア共生進化の起点。夜だけヨルノズクが現れる。
+    table.push("ヨルノズク","ヨルノズク");
+  }
   return table[Math.floor(Math.random()*table.length)];
 }
 
@@ -4692,6 +5413,7 @@ function renderFieldBanner(){
 function typeMultiplier(moveType,defTypes,defender=null){
   if(defender?.ability==="ふゆう" && moveType==="じめん") return 0;
   if(defender?.ability==="ちょすい" && moveType==="みず") return 0;
+  if(defender?.ability==="せいれんろ" && moveType==="ほのお") return 0;
   let mult=1;
   for(const t of defTypes||["ノーマル"]) mult *= ((TYPE_CHART[moveType]||{})[t] ?? 1);
   return mult;
@@ -4718,6 +5440,12 @@ function effectivenessText(mult){
   if(mult<1) return "効果はいまひとつのようだ…";
   return "";
 }
+
+function symbiosisPowerBoost(attacker,defender){
+  if(attacker?.ability==="あみさばき" && (defender?.stages?.spe||0)<0) return 1.3;
+  return 1;
+}
+
 function abilityPowerBoost(attacker,move){
   if(attacker.hp<=Math.floor(attacker.maxHp/3)){
     if(attacker.ability==="しんりょく" && move.type==="くさ") return 1.5;
@@ -4738,7 +5466,7 @@ function calcDamage(attacker,defender,moveName){
   const A=effectiveStat(attacker,attackKey);
   const D=effectiveStat(defender,defenseKey);
   const base=Math.floor((((2*attacker.level/5+2)*mv.power*A/Math.max(1,D))/50)+2);
-  const raw=Math.floor(base*stab*eff*crit*abilityPowerBoost(attacker,mv)*environmentPowerMod(mv.type,attacker)*(0.9+Math.random()*0.2));
+  const raw=Math.floor(base*stab*eff*crit*abilityPowerBoost(attacker,mv)*symbiosisPowerBoost(attacker,defender)*environmentPowerMod(mv.type,attacker)*(0.9+Math.random()*0.2));
   return {damage:eff===0?0:Math.max(1,raw),eff,move:mv,crit:crit>1};
 }
 function healthyIndex(startAt=0){
@@ -4754,10 +5482,22 @@ function applyEntryAbility(mon,opponent,logParts){
     opponent.stages.atk=Math.max(-6,(opponent.stages.atk||0)-1);
     logParts.push(`${mon.name}のいかく！ ${opponent.name}の攻撃が下がった。`);
   }
+  if(mon.ability==="みちしるべ"){
+    mon.stages.spe=Math.min(6,(mon.stages.spe||0)+1);
+    logParts.push(`${mon.name}のみちしるべ！ 素早さが上がった！`);
+  }
+}
+function applyOpponentSwitchAbility(watcher,logParts){
+  if(!watcher || watcher.hp<=0) return;
+  if(watcher.ability==="やまみはり"){
+    watcher.stages.spa=Math.min(6,(watcher.stages.spa||0)+1);
+    watcher.stages.acc=Math.min(6,(watcher.stages.acc||0)+1);
+    logParts.push(`${watcher.name}のやまみはり！ 相手の動きを読み、特攻と命中が上がった！`);
+  }
 }
 function resetBattleMon(mon){
   mon.stages={atk:0,def:0,spa:0,spd:0,spe:0,acc:0};
-  mon.sashUsed=false; mon.protected=false; mon.protectCount=0;
+  mon.sashUsed=false; mon.protected=false; mon.protectCount=0; mon.gitaijuUsed=false;
 }
 function applyHeldAuto(mon,logParts){
   if(!mon)return;
@@ -4870,7 +5610,13 @@ function postBattleStory(flag){
     rival2:["ガチライバル","……また負けたか。南のテンリュウ方面へ行け。"],
     friend3:["親友","やっぱり強いね。次はシオナギシティだ！"],
     rival3:["ガチライバル","強くなったのは認める。博物館で気になる展示がある。"],
+    friendFinal:["親友","旧宿場を通ったあと、オオタチも変わったんだ。人と歩いた道そのものが力になったみたい。"],
     rivalFinal:["ガチライバル","才能は大事だ。今でもそう思う。……でも、それだけじゃ説明できない強さがあるらしい。"],
+    gym5:["カイト","海食洞を越えてきた君なら知ってるよね。アミダコは海で人と働いてきた相棒なんだ。"],
+    gym6:["テツジ","鉱山を越えたお前なら分かるだろ？ ロウガネンは人と炉を守ってきた相棒なんだ！"],
+    gym8:["レント","飛騨の夜道を知った君なら、このヨミミズクがどんな存在か分かるはずだ。"],
+    rematchKaito:["カイト","アミダコは海で人を助けてきた。その強さも一緒に見せたかったんだ！"],
+    rematchRento:["レント","ヨミミズクは山の夜を知っている。俺が北部を調査できたのも、この相棒のおかげだ。"],
     hqGrunts:["スプレマ団したっぱ","くそっ、突破された！ この先にセルマ様がいる！"],
     mireiFinal:["ミレイ","負けちゃった……。でも、ボスの邪魔はさせたくなかったんだけどな。"],
     rozaFinal:["ロザ","くっ……でも外にはボスがいるわよ！"]
@@ -4992,12 +5738,37 @@ function storyTrainerDefinition(flag,def){
   }else if(flag==="friend2"){
     copy.team=[[evolvedStarter(fBase,10),10],["ムックル",10]];
   }else if(flag==="friend3"){
-    copy.team=[[evolvedStarter(fBase,30),30],["ムクバード",29],["メリープ",29],["ウパー",30]];
+    copy.team=[[evolvedStarter(fBase,30),30],["ムクバード",29],["メリープ",29],["オオタチ",30]];
   }else if(flag==="friendFinal"){
+    const friendPartner=symbiosisStage("symbiosisPostTownPassed")?"ミチタチ":"オオタチ";
     copy.team=[
       [evolvedStarter(fBase,52),52],
-      ["ムクホーク",50],["デンリュウ",50],["ヌオー",51],["ルカリオ",52],["ニンフィア",51]
+      ["ムクホーク",50],["デンリュウ",50],[friendPartner,51],["ルカリオ",52],["ニンフィア",51]
     ];
+  }else if(flag==="gym5"){
+    const seaPartner=symbiosisStage("symbiosisSeaPassed")?"アミダコ":"オクタン";
+    copy.team=[["ペリッパー",33],["ランターン",34],[seaPartner,36],["イルカマン",36]];
+  }else if(flag==="gym6"){
+    const metalPartner=symbiosisStage("symbiosisMinePassed")?"ロウガネン":"マグカルゴ";
+    copy.team=[["トリデプス",39],["ドータクン",39],["デカヌチャン",40],[metalPartner,42]];
+  }else if(flag==="gym8"){
+    const watcher=symbiosisStage("symbiosisShrinePassed")?"ヨミミズク":"ヨルノズク";
+    copy.team=[["タイカイデン",50],["ジバコイル",51],["シビルドン",51],["ハラバリー",52],[watcher,53],["ゼラオラ",55]];
+  }else if(flag==="rematchKaito"){
+    const seaPartner=symbiosisStage("symbiosisSeaPassed")?"アミダコ":"オクタン";
+    copy.team=[["ペリッパー",67],["ランターン",67],["カマスジョー",68],["ウォッシュロトム",68],["ミロカロス",69],[seaPartner,70]];
+  }else if(flag==="rematchTetsuji"){
+    const furnace=symbiosisStage("symbiosisMinePassed")?"ロウガネン":"マグカルゴ";
+    copy.team=[["トリデプス",67],["ドータクン",67],["デカヌチャン",68],["ジバコイル",68],["ギルガルド",69],[furnace,70]];
+  }else if(flag==="rematchRento"){
+    const watcher=symbiosisStage("symbiosisShrinePassed")?"ヨミミズク":"ヨルノズク";
+    copy.team=[["タイカイデン",68],["ジバコイル",68],["シビルドン",69],["ハラバリー",69],[watcher,70],["ゼラオラ",71]];
+  }else if(flag==="champion"){
+    const treePartner=symbiosisStage("symbiosisPostTownPassed")?"ギタイボク":"ウソッキー";
+    copy.team=[["ガブリアス",61],["ウォッシュロトム",61],[treePartner,62],["ウルガモス",62],["ニンフィア",63],["フロスティア",64]];
+  }else if(flag==="hulkRematch"){
+    const treePartner=symbiosisStage("symbiosisPostTownPassed")?"ギタイボク":"ウソッキー";
+    copy.team=[["ガブリアス",73],["ウォッシュロトム",73],[treePartner,74],["ウルガモス",74],["ニンフィア",75],["フロスティア",76]];
   }else if(flag==="rival1"){
     copy.team=[[evolvedStarter(rBase,23),23],["ニューラ",23],["ギルガルド",24]];
   }else if(flag==="rival2"){
@@ -5067,9 +5838,9 @@ function renderBattle(){
   const doubleNote=b.double?`<div class="gymGimmick">ダブルバトル：味方 ${b.ally?b.ally.name:"なし"} / 相手2体目 ${b.enemy2?b.enemy2.name:"なし"}</div>`:"";
   const eStatus=e.status?`<span class="statusAilment">${e.status}</span>`:"";
   const pStatus=p.status?`<span class="statusAilment">${p.status}</span>`:"";
-  $("enemyBattleCard").innerHTML=`${trainer}${doubleNote}<b>${b.kind==="wild"?"野生の ":""}${e.name}</b>　Lv.${e.level} ${eStatus}<div>${eTypes}</div><div class="abilityTag">特性:${e.ability}</div><div class="heldTag">持ち物:${e.held}</div><div>HP ${e.hp}/${e.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${ePct}%"></div></div>`;
+  $("enemyBattleCard").innerHTML=`${trainer}${doubleNote}<b>${b.kind==="wild"?"野生の ":""}${e.name}</b>　Lv.${e.level} ${eStatus}<div class="partyMini classicHint">相手の詳細は図鑑や戦いの中で確かめよう</div><div>HP</div><div class="hpOuter"><div class="hpInner" style="width:${ePct}%"></div></div>`;
   const expNeed=expToNext(p), expPct=Math.max(0,Math.min(100,Math.round((p.exp/expNeed)*100)));
-  $("playerBattleCard").innerHTML=`<b>${p.name}</b>　Lv.${p.level} ${pStatus}<div>${pTypes}</div><div class="abilityTag">特性:${p.ability}</div><div class="heldTag">持ち物:${p.held}</div><div>HP ${p.hp}/${p.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${pPct}%"></div></div><div class="partyMini">EXP ${p.exp}/${expNeed}</div><div class="expOuter"><div class="expInner" style="width:${expPct}%"></div></div>`;
+  $("playerBattleCard").innerHTML=`<b>${p.name}</b>　Lv.${p.level} ${pStatus}<div>${pTypes}</div><div>HP ${p.hp}/${p.maxHp}</div><div class="hpOuter"><div class="hpInner" style="width:${pPct}%"></div></div><div class="partyMini">EXP ${p.exp}/${expNeed}</div><div class="expOuter"><div class="expInner" style="width:${expPct}%"></div></div>`;
   $("battleLog").textContent=b.log||"";
   $("ballBtn").disabled=(b.kind!=="wild");
   $("ballBtn").textContent=b.kind==="wild"?"ボール":"ボール不可";
@@ -5151,6 +5922,17 @@ function executeMove(user,target,moveName,logParts,isPlayer){
   }
   const r=calcDamage(user,target,moveName==="わるあがき"?"たいあたり":moveName);
   let dmg=r.damage;
+  if(target.ability==="せいれんろ" && mv.type==="ほのお"){
+    target.stages.def=Math.min(6,(target.stages.def||0)+1);
+    target.stages.spa=Math.min(6,(target.stages.spa||0)+1);
+    logParts.push(`${target.name}のせいれんろ！ 炎を取り込み、防御と特攻が上がった！`);
+    return;
+  }
+  if(target.ability==="ぎたいじゅ" && r.eff>1 && !target.gitaijuUsed){
+    target.gitaijuUsed=true;
+    dmg=Math.max(1,Math.floor(dmg*.5));
+    logParts.push(`${target.name}のぎたいじゅ！ 最初の弱点攻撃を受け流した！`);
+  }
   if(target.hp===target.maxHp && dmg>=target.hp){
     if((target.ability==="がんじょう" || (target.held==="きあいのタスキ" && !target.sashUsed)) && target.hp>1){
       dmg=target.hp-1;
@@ -5167,6 +5949,11 @@ function executeMove(user,target,moveName,logParts,isPlayer){
   if(r.move.drain && dmg>0){
     const heal=Math.max(1,Math.floor(dmg*r.move.drain));
     user.hp=Math.min(user.maxHp,user.hp+heal); logParts.push(`${user.name}はHPを${heal}回復。`);
+  }
+  if(r.move.recoil && dmg>0 && moveName!=="わるあがき" && user.ability!=="いしあたま"){
+    const recoil=Math.max(1,Math.floor(dmg*r.move.recoil));
+    user.hp=Math.max(0,user.hp-recoil);
+    logParts.push(`${user.name}は反動で${recoil}ダメージ。`);
   }
   if(moveName==="わるあがき" && dmg>0){
     const recoil=Math.max(1,Math.floor(user.maxHp/4)); user.hp=Math.max(0,user.hp-recoil);
@@ -5204,6 +5991,7 @@ function resolveEndOfTurn(){
     b.enemy=next;
     resetBattleMon(b.enemy);
     const logs=[`${b.trainerName}は${b.enemy.name}に交代した！`];
+    applyOpponentSwitchAbility(p,logs);
     applyEntryAbility(b.enemy,p,logs);
     b.log+=" "+logs.join(" ");
   }
@@ -5260,11 +6048,47 @@ function gainExp(mon,amount){
   if(levels) sfx("level"); mon._levelLogs=logs;
   return levels;
 }
+
+const EXP_RATES = {
+  wild:0.80,      // 野生
+  trainer:1.10,   // 道路・ジムトレーナーなど一般トレーナー
+  major:1.40      // 親友・ライバル・ジムリーダー・幹部・四天王など主要キャラ
+};
+
+function isMajorBattleFlag(flag){
+  if(!flag) return false;
+  if(/^gym[1-8]$/.test(flag)) return true;
+  if(/^friend/.test(flag) || /^rival/.test(flag)) return true;
+  if(/^elite[1-4]$/.test(flag) || flag==="champion") return true;
+  if(/^rematch/.test(flag) || /^eliteRematch/.test(flag) || flag==="hulkRematch") return true;
+  return [
+    "roza1","mirei1","ruinsBattle","mireiFinal","rozaFinal",
+    "selmaBattle","valdBattle","legendCalm"
+  ].includes(flag);
+}
+
+function expCategoryForBattle(b){
+  if(!b || b.kind==="wild") return "wild";
+  return isMajorBattleFlag(b.flag) ? "major" : "trainer";
+}
+
+function expRateForBattle(b){
+  return EXP_RATES[expCategoryForBattle(b)] || 1;
+}
+
+function expCategoryLabel(b){
+  const c=expCategoryForBattle(b);
+  return c==="wild" ? "野生80%" : c==="major" ? "主要キャラ140%" : "一般トレーナー110%";
+}
+
 function onEnemyDefeated(){
   const b=state.battle,p=activeMon(); if(!b||!p)return;
   const diff=b.enemy.level-p.level;
   const levelMod=diff>=3?1.35:diff<=-5?0.45:diff<=-2?0.7:1;
-  const xp=Math.max(4,Math.floor((10+b.enemy.level*4.2)*levelMod));
+  const baseXp=(10+b.enemy.level*4.2)*levelMod;
+  const xpRate=expRateForBattle(b);
+  const xp=Math.max(3,Math.floor(baseXp*xpRate));
+  const xpLabel=expCategoryLabel(b);
   const levels=gainExp(p,xp); const levelExtra=(p._levelLogs||[]).join(" "); p._levelLogs=[];
   if(b.double && b.enemy2 && b.enemy2.hp>0 && b.enemyIndex >= b.enemyTeam.length-1){
     b.enemy=b.enemy2; b.enemy2=null;
@@ -5284,7 +6108,7 @@ function onEnemyDefeated(){
       b.enemy=b.enemyTeam[b.enemyIndex];
     }
     resetBattleMon(b.enemy);
-    const logs=[`${b.enemy.name}を倒した！ EXP ${xp}${levels?` / Lv.${p.level}に上がった！`:""} ${levelExtra}。 ${b.trainerName}は${b.enemy.name}を繰り出した！`];
+    const logs=[`${b.enemy.name}を倒した！ EXP ${xp}（${xpLabel}）${levels?` / Lv.${p.level}に上がった！`:""} ${levelExtra}。 ${b.trainerName}は${b.enemy.name}を繰り出した！`];
     applyEntryAbility(b.enemy,p,logs);
     b.log=logs.join(" ");
     b.inputLocked=false;
@@ -5298,7 +6122,7 @@ function onEnemyDefeated(){
     autosave("trainer");
     const finishedFlag=b.flag;
     postBattleStory(finishedFlag);
-    b.log=`${b.trainerName}との勝負に勝った！ ₽${actualReward}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
+    b.log=`${b.trainerName}との勝負に勝った！ ₽${actualReward}獲得！ 最後のEXP ${xp}（${xpLabel}）${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
     setTimeout(()=>completeTrainerProgress(finishedFlag),900);
     if(["nagaraGymTrainer1","nagaraGymTrainer2","nagaraGymTrainer3"].includes(finishedFlag)){
       setTimeout(()=>{
@@ -5339,7 +6163,7 @@ function onEnemyDefeated(){
     },1000);
   }else{
     const money=20+b.enemy.level*6; state.money+=money;
-    b.log=`${b.enemy.name}を倒した！ EXP ${xp} / ₽${money}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
+    b.log=`${b.enemy.name}を倒した！ EXP ${xp}（${xpLabel}） / ₽${money}獲得！${levels?` ${p.name}はLv.${p.level}になった！`:""} ${levelExtra}`;
   }
   renderBattle();
   setTimeout(()=>endBattle(true),850);
@@ -5428,6 +6252,7 @@ function openBattleSwitch(){
       state.activeIndex=i; resetBattleMon(activeMon());
       partyModal.classList.add("hidden");
       const logs=[`${activeMon().name}に交代した！`];
+      applyOpponentSwitchAbility(b.enemy,logs);
       applyEntryHazards(activeMon(),"player",logs);
       applyEntryAbility(activeMon(),b.enemy,logs);
       b.log=logs.join(" "); renderBattle(); setTimeout(battleEnemyTurn,250);
@@ -5581,12 +6406,112 @@ function legendaryCutscene(){
 function tileClass(ch){
   return ({
     "T":"tree","G":"grass","P":"path","R":"roof","D":"door",
-    "W":"water","C":"city","F":"flower","E":"path","L":"lab","B":"bridge","S":"stone","I":"water","V":"stone",".":"path"
+    "W":"water","C":"city","F":"flower","E":"path","L":"lab","B":"bridge","S":"stone","I":"water","V":"stone",".":"path",
+    "H":"highland","Q":"cliff","A":"stairs","X":"rail","N":"snowbank","U":"urban","J":"waterfall"
   })[ch] || "path";
 }
-function isBlocked(ch){ return ["T","R","W","C","L"].includes(ch); }
+function isBlocked(ch){ return ["T","R","W","C","L","Q","N","J"].includes(ch); }
+function tileElevation(ch){ return ch==="H" ? 1 : 0; }
+
+
+const CLASSIC_LEDGES = {
+  route1:[{x:7,y:4}], route4:[{x:6,y:4}], route8:[{x:8,y:4}],
+  route14:[{x:5,y:4}], route19:[{x:4,y:4}]
+};
+const HIDDEN_ITEMS = {
+  route1:[{x:8,y:2,item:"キズぐすり",flag:"hidden_r1_potion",hint:"草むらの隅で何かが光った。"}],
+  route4:[{x:2,y:7,item:"スーパーボール",flag:"hidden_r4_ball",hint:"木の根元に小さなボールが埋まっている。"}],
+  route8:[{x:9,y:7,item:"なんでもなおし",flag:"hidden_r8_heal",hint:"岩陰に道具が落ちている。"}],
+  route14:[{x:3,y:2,item:"ハイパーボール",flag:"hidden_r14_ball",hint:"登山道の端に何かが光る。"}],
+  route19:[{x:7,y:7,item:"すごいキズぐすり",flag:"hidden_r19_potion",hint:"足元にかすかな反射が見える。"}]
+};
+const REVISIT_SPOTS = {
+  route5:{require:"gym5",name:"水辺の小道",reward:"ダイブボール",flag:"revisit_route5",text:"なみのりで脇道へ回り、ダイブボールを見つけた！"},
+  route9:{require:"gym5",name:"入り江",reward:"ハイパーボール",flag:"revisit_route9",text:"なみのりで入り江へ渡り、ハイパーボールを見つけた！"},
+  route17:{require:"gym6",name:"崩れた岩場",reward:"なんでもなおし",flag:"revisit_route17",text:"岩場の奥からなんでもなおしを見つけた！"}
+};
+function isLedgeAt(mapId,x,y){return (CLASSIC_LEDGES[mapId]||[]).some(p=>p.x===x&&p.y===y);}
+function hiddenItemAt(mapId,x,y){return (HIDDEN_ITEMS[mapId]||[]).find(p=>p.x===x&&p.y===y);}
+function tryHiddenItem(x,y){
+  const h=hiddenItemAt(state.map,x,y); if(!h||state.flags[h.flag])return false;
+  state.flags[h.flag]=true; addItem(h.item,1); autosave("hidden item");
+  mapEl.classList.remove("hiddenFoundFlash"); void mapEl.offsetWidth; mapEl.classList.add("hiddenFoundFlash");
+  say("道具",`${h.hint} ${h.item}を見つけた！`); return true;
+}
+function tryRevisitSpot(){
+  const r=REVISIT_SPOTS[state.map]; if(!r||state.flags[r.flag]||!state.flags[r.require])return false;
+  const edge=state.x<=2||state.x>=9||state.y<=2||state.y>=7; if(!edge)return false;
+  state.flags[r.flag]=true; addItem(r.reward,1); autosave("revisit"); say(r.name,r.text); return true;
+}
+
+
+const MAJOR_NPC_NAMES = new Set([
+  "親友","ガチライバル","カツラギ博士","ミオ","レント","カイト","エルド","ヴァルド","セルマ","ミレイ","ロザ",
+  "ガンジ","スズネ","ゲンゾウ","レイカ","テツジ","セリナ","ハルク",
+  "四天王 マサト","四天王 リュカ","四天王 シノ","四天王 ゴウ",
+  "暴走する伝説","ルミナーク","ノクザーク","ノクシエル"
+]);
+const ITEM_NAME_HINTS = [
+  "箱","荷物","岩陰","草むら","漂着物","光","研究箱","本棚","テレビ","古文書","標本","地図","薪","流木",
+  "採掘跡","潮だまり","日記","箪笥","案内板","供物台","鉱脈","貝殻","石盤","スイッチ","レバー","バルブ","装置","歯車","配電盤",
+  "端末","台座","祭壇","祠","像","道祖神","トロッコ","荷箱","保守箱"
+];
+function isMajorNPC(n){
+  if(!n) return false;
+  if(MAJOR_NPC_NAMES.has(n.name)) return true;
+  const f=n.flag||"";
+  return /^(friend|rival|gym[1-8]$|champion$|elite[1-4]$|selmaBattle$|valdBattle$|legendCalm$|mireiFinal$|rozaFinal$|roza1$|mirei1$|hqUnlocked$|strategyMeeting$|eldTruth$)/.test(f);
+}
+function isTrainerNPC(n){
+  return !!(n?.flag && TRAINERS[n.flag]);
+}
+function isItemNPC(n){
+  if(!n) return false;
+  if(ITEM_NAME_HINTS.some(k=>(n.name||"").includes(k))) return true;
+  const f=n.flag||"";
+  return /(Item|Ball|Stone|Wood|Shell|Feather|Clue|Sigil|shrine|Shrine|revisit|hidden|Gift|Patch|Supply)/i.test(f);
+}
+function npcCategoryClass(n){
+  if(isMajorNPC(n)) return "npc-major";
+  if(isTrainerNPC(n)) return "npc-trainer";
+  if(isItemNPC(n)) return "npc-item";
+  return "npc-town";
+}
+
+
+function updateSymbiosisMilestones(mapId=state.map){
+  state.flags ??= {};
+
+  // 旧宿場跡は4番道路・木曽古道から寄れる。
+  // そこを越えてキソへ到達した時点からNPC側のミチタチ/ギタイボク進化を許可。
+  if(["kiso","route5","route5b","azumi","route6","route7","senkou","tsurune"].includes(mapId))
+    state.flags.symbiosisPostTownPassed=true;
+
+  // 旧センコウ鉱山B2Fは6番道路・鉱山麓から寄れる。
+  // センコウ到達以降の戦闘ではロウガネンへ。
+  if(["senkou","route7","tsurune","azumiReturn","route8","tenryu","route9","route9b","shionagi"].includes(mapId))
+    state.flags.symbiosisMinePassed=true;
+
+  // 潮騒の海食洞・下層は9番道路・海食崖から寄れる。
+  // シオナギ到達以降の戦闘ではアミダコへ。
+  if(["shionagi","route10","yunohana","route11","kanade","route12","kawamichi","route13"].includes(mapId))
+    state.flags.symbiosisSeaPassed=true;
+
+  // 飛騨山岳参道は14番道路・飛騨古道から寄れる。
+  // ユラギ到達以降の戦闘ではヨミミズクへ。
+  if(["yuragi","hidaCave1","miyama","hidaRuins","route15","route15b","yukinagi","route16","route18","tsubaki","setsugetsu"].includes(mapId))
+    state.flags.symbiosisShrinePassed=true;
+
+  // 旧セーブ救済：ストーリー進行から「既に越えた」と推定する。
+  if(state.flags.friend2 || state.flags.gym2 || state.flags.rival1) state.flags.symbiosisPostTownPassed=true;
+  if(state.flags.gym3 || state.flags.gym4 || state.flags.rival2) state.flags.symbiosisMinePassed=true;
+  if(state.flags.gym5 || state.flags.emergencyMeeting) state.flags.symbiosisSeaPassed=true;
+  if(state.flags.ruinsBattle || state.flags.gym6 || state.flags.gym7 || state.flags.strategyMeeting) state.flags.symbiosisShrinePassed=true;
+}
+function symbiosisStage(key){ updateSymbiosisMilestones(); return !!state.flags[key]; }
 
 function renderMap(){
+  updateSymbiosisMilestones(state.map);
   ensureCurrentPositionSafe();
   const m=maps[state.map];
   mapNameEl.textContent=m.name;
@@ -5596,9 +6521,16 @@ function renderMap(){
       const ch=m.rows[y][x];
       const d=document.createElement("div");
       d.className="tile "+tileClass(ch);
-      if(m.npcs.some(n=>n.x===x&&n.y===y)) d.classList.add("npc");
+      const tileNpc=m.npcs.find(n=>n.x===x&&n.y===y);
+      if(tileNpc){
+        d.classList.add("npc",npcCategoryClass(tileNpc));
+        d.title=`${tileNpc.name}｜${npcCategoryClass(tileNpc)==="npc-major"?"主要NPC":npcCategoryClass(tileNpc)==="npc-trainer"?"トレーナー":npcCategoryClass(tileNpc)==="npc-item"?"アイテム・調べる物":"町の人"}`;
+      }
       if(m.exits.some(e=>e.x===x&&e.y===y)) d.classList.add("exit");
       if(m.signs.some(s=>s.x===x&&s.y===y)) d.classList.add("sign");
+      if(isLedgeAt(state.map,x,y)) d.classList.add("ledge");
+      const landmarkSign=m.signs.find(s=>s.x===x&&s.y===y && /大杉|吊り橋|水車|鉱山塔|雪の門|石柱|滝/.test(s.text||""));
+      if(landmarkSign) d.classList.add("landmark");
       mapEl.appendChild(d);
     }
   }
@@ -5686,7 +6618,7 @@ function ensureCurrentPositionSafe(){
 
 
 function isRoadTrainer(n){
-  return !!(n?.flag && TRAINERS[n.flag] && /^route\d+Trainer/.test(n.flag));
+  return !!(n?.flag && TRAINERS[n.flag] && /^route\d+[A-Z]?Trainer/.test(n.flag));
 }
 function clearLineBetween(x1,y1,x2,y2){
   const m=maps[state.map];
@@ -5709,7 +6641,7 @@ function clearLineBetween(x1,y1,x2,y2){
   return false;
 }
 function checkTrainerSight(){
-  if(state.battle || !/^route\d+$/.test(state.map)) return false;
+  if(state.battle || !/^route\d+[a-z]?$/.test(state.map)) return false;
   const candidates=maps[state.map].npcs
     .filter(n=>isRoadTrainer(n) && !state.flags[n.flag])
     .filter(n=>{
@@ -5736,8 +6668,21 @@ function move(dx,dy,dir){
   if(!row) return;
   const ch=row[nx];
   const ex=exitAt(nx,ny);
+  if(isLedgeAt(state.map,nx,ny)){
+    if(dir!=="down"){say("ガイド","段差は上から下へしか越えられない。");return;}
+    const jy=ny+1;
+    if(jy>=H||!isWalkableTile(state.map,nx,jy)){say("ガイド","この段差は今は越えられない。");return;}
+    state.x=nx;state.y=jy;state.surfing=false;renderPlayer();sfx("click");
+    if(checkTrainerSight())return; return;
+  }
   if(state.map==="route13" && ch==="I" && !state.flags.gym5){
     say("ガイド","第5バッジを手に入れるとなみのりで進める。");
+    return;
+  }
+  const hereCh=maps[state.map].rows[state.y][state.x];
+  const heightChanged=tileElevation(hereCh)!==tileElevation(ch);
+  if(heightChanged && hereCh!=="A" && ch!=="A" && !ex){
+    say("ガイド","崖で高さが違う。階段や坂を探そう。");
     return;
   }
   // 出口マスは地形文字が壁・屋根でも進入可能として扱う。
@@ -5864,11 +6809,14 @@ function debugDiagnose(){
   if(badTrainerMoves.length) issues.push(`未定義手持ち ${badTrainerMoves.length}件`);
   $("debugOutput").textContent=[
     `saveVersion=${state.saveVersion}`,
+    `EXP倍率 野生=${Math.round(EXP_RATES.wild*100)}% / 一般=${Math.round(EXP_RATES.trainer*100)}% / 主要=${Math.round(EXP_RATES.major*100)}%`,
     `map=${state.map} (${maps[state.map]?.name||"?"})`,
     `badges=${state.badges}`,
     `starter=${state.starter||"未選択"}`,
     `legend=${state.legendVersion||"未決定"}`,
     `surf=${state.surfing?"ON":"OFF"}`,
+    `classic hidden=${Object.values(HIDDEN_ITEMS).flat().filter(h=>state.flags[h.flag]).length}/${Object.values(HIDDEN_ITEMS).flat().length}`,
+    `expanded routes=8 / side dungeons=8`,
     issues.length?`要確認:\n- ${issues.join("\n- ")}`:"進行診断: 大きな異常は見つかりませんでした。"
   ].join("\n");
 }
@@ -5881,10 +6829,32 @@ function openDebug(){
 function action(){
   if(!titleScreen.classList.contains("hidden") || !cutsceneOverlay.classList.contains("hidden") || !battleModal.classList.contains("hidden") || !debugModal.classList.contains("hidden")) return;
   const [fx,fy]=frontPos();
+  if(tryHiddenItem(fx,fy))return;
+  if(tryHiddenItem(state.x,state.y))return;
+  if(tryRevisitSpot())return;
   const n=npcAt(fx,fy);
   if(n){
     if(n.flag && GYM_PUZZLES[n.flag]){
       handleGymPuzzle(n.flag); return;
+    }
+    const dungeonRewards={
+      oldPostItem:["いいキズぐすり",1],
+      ravineStone:["みずのいし",1],
+      mineItem:["スーパーボール",2],
+      seaCaveItem:["ダイブボール",2],
+      snowVillageItem:["なんでもなおし",2],
+      undergroundItem:["ハイパーボール",2],
+      stoneRuinsItem:["すごいキズぐすり",2],
+      mineDeepItem:["ハイパーボール",2],
+      seaLowerItem:["ダイブボール",2]
+    };
+    if(n.flag && dungeonRewards[n.flag]){
+      if(!state.flags[n.flag]){
+        const [item,count]=dungeonRewards[n.flag];
+        state.flags[n.flag]=true; addItem(item,count); autosave("dungeon item");
+        say(n.name,`${item}を${count}個見つけた！`);
+      }else say(n.name,"もう何も残っていない。");
+      return;
     }
     if(n.flag==="friend1"){
       startFriend1Battle();
@@ -6758,7 +7728,7 @@ function action(){
 }
 const SAVE_KEY="alciaSave";
 
-const CURRENT_SAVE_VERSION=43;
+const CURRENT_SAVE_VERSION=51;
 function migrateLoadedSave(s){
   if(!s || typeof s!=="object") return s;
   const old=s.saveVersion||0;
@@ -6767,7 +7737,7 @@ function migrateLoadedSave(s){
   s.dex ??= {seen:{},caught:{}};
   s.mons ??= [];
   s.box ??= [];
-  if(old<43){
+  if(old<51){
     s.surfing=false;
     s.legendVersion ??= null;
     [...s.mons,...s.box].forEach(m=>{ if(m) m._statsMigrated=false; });
